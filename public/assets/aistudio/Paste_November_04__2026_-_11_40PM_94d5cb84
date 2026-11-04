@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title> FIRST EARNING ZONE</title>
+    
+        <link rel="icon" type="image/x-icon" href="/assets/images/favicon-20260828105542.jpg">
+        
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=1793814023">
+    <style>
+        .header-logo-img {
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* পপ-আপ নোটিশ মোডাল ডিজাইন */
+        .notice-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(6px);
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            padding: 15px;
+            box-sizing: border-box;
+            animation: fadeInNotice 0.3s ease;
+        }
+
+        @keyframes fadeInNotice {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .notice-modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px;
+            padding: 25px 22px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .notice-close-x {
+            position: absolute;
+            top: 15px;
+            right: 18px;
+            font-size: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .notice-close-x:hover { color: #0f172a; }
+
+        .notice-icon-box {
+            font-size: 38px;
+            color: #2563eb;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 6px rgba(37, 99, 235, 0.2));
+        }
+
+        .notice-modal-card h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 10px 0;
+        }
+
+        .notice-modal-card p {
+            font-size: 13.5px;
+            color: #475569;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .notice-btn-tg {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #0284c7;
+            color: #ffffff;
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .notice-btn-tg:hover { background: #0369a1; transform: translateY(-1px); }
+
+        .notice-btn-wa {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #22c55e;
+            color: #ffffff;
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .notice-btn-wa:hover { background: #16a34a; transform: translateY(-1px); }
+
+        /* ইউটিউব টিউটোরিয়াল বাটনগুলোর ডিজাইন */
+        .tutorial-btn-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1.5px solid #fecaca;
+            width: 100%;
+            padding: 11px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            text-decoration: none;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+            transition: 0.2s;
+        }
+        .tutorial-btn-item:hover { background: #fee2e2; border-color: #fca5a5; }
+
+        .notice-btn-close {
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .notice-btn-close:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+<div id="page-loader">
+    <div class="spinner"></div>
+</div>
+
+<!-- গুরুত্বপূর্ণ নোটিশ ও টিউটোরিয়াল পপ-আপ মোডাল -->
+
+<link rel="stylesheet" href="/assets/css/loader.css?v=1793814023">
+<div class="main-container">
+    <header class="app-header">
+        <div class="header-left" style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-bars menu-icon" onclick="toggleUserSidebar()"></i>
+                            <img src="/assets/images/logo-20260828105541.jpg" alt="Logo" class="header-logo-img">
+                        <div class="site-title">FIRST EARNING ZONE</div>
+        </div>
+        
+        <!-- লাইভ মেসেজ / নোটিফিকেশন আইকনে ক্লিক করলে সরাসরি টেলিগ্রাম চ্যানেলে যাবে -->
+        <a href="https://t.me/FIRST_EARNING_ZONE_Official" target="_blank" class="notification-icon" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-dot"></span>
+        </a>
+    </header>
+<style>
+/* জুম সমস্যা সমাধানের জন্য এবং সাইডবার ফিক্সড রাখতে */
+.user-sidebar-wrapper {
+    touch-action: pan-y;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* মেনু বাটনগুলোর ব্লু ব্যাকগ্রাউন্ড স্টাইল */
+.user-sidebar-menu a {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.08) 0%, rgba(0, 198, 255, 0.12) 100%) !important;
+    border: 1px solid rgba(0, 123, 255, 0.15);
+    margin-bottom: 6px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.user-sidebar-menu a:hover {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.18) 0%, rgba(0, 198, 255, 0.25) 100%) !important;
+    border-color: rgba(0, 123, 255, 0.4);
+    transform: translateX(3px);
+}
+
+.user-sidebar-menu a.logout-btn {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(248, 113, 113, 0.12) 100%) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+.user-sidebar-menu a.logout-btn:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(248, 113, 113, 0.25) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.4);
+}
+</style>
+
+<div id="user-sidebar" class="user-sidebar-wrapper">
+    <div class="user-sidebar-content">
+        <div class="user-sidebar-header">
+            <h3>MENU</h3>
+            <i class="fa-solid fa-xmark" onclick="toggleUserSidebar()"></i>
+        </div>
+        
+        <div class="user-sidebar-profile">
+            
+            <div class="avatar" style="padding: 0; overflow: hidden; background: transparent; border: 2px solid var(--primary);">
+                <img src="/assets/images/logo-20260828105541.jpg" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.style.display='none'">
+            </div>
+
+            <!-- নামের বক্স -->
+            <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(59, 130, 246, 0.1) 100%); border: 1px solid rgba(37, 99, 235, 0.25); padding: 5px 10px; border-radius: 8px; margin: 8px 0 2px 0; width: 100%; text-align: center; box-sizing: border-box;">
+                <h4 style="display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; font-size: 15px; font-weight: 700; color: #1e293b;">
+                    <span>Abdul ahad</span>
+                                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: rgba(239, 68, 68, 0.15); border-radius: 50%; flex-shrink: 0;" title="Unverified Account">
+                            <i class="fa-solid fa-xmark" style="color: #ef4444; font-size: 11px;"></i>
+                        </span>
+                                    </h4>
+            </div>
+            
+                            <div class="unverified-badge" style="color: #dc2626; background: #fee2e2; border: 1px solid #ef4444; padding: 5px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 700; display: inline-block; margin-top: 4px;">
+                    Account Unnable                </div>
+                        
+            <!-- অ্যাফিলিয়েট আইডি বক্স -->
+            <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(59, 130, 246, 0.15) 100%); border: 1px solid rgba(37, 99, 235, 0.3); padding: 8px 12px; border-radius: 10px; margin: 12px 0 10px 0; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                <span style="color: #1d4ed8; font-weight: 600;">Affiliate ID:</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="color:#2563eb; font-family: monospace; font-size: 14px;">236539</strong>
+                    <i class="fa-solid fa-copy" style="color:#007bff; cursor:pointer; font-size: 14px;" onclick="copyRefCode('236539')" title="Copy ID"></i>
+                </div>
+            </div>
+
+            <!-- জয়েন ও ভেরিফাই তারিখের বক্স -->
+            <div style="display: flex; gap: 8px; width: 100%; margin-top: 5px;">
+                <div style="flex: 1; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(30, 41, 59, 0.5); padding: 7px 8px; border-radius: 8px; text-align: center; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);">
+                    <div style="font-size: 10px; color: #ffffff; font-weight: 700; text-transform: uppercase;">Joined</div>
+                    <div style="font-size: 11.5px; color: #ffffff; font-weight: 700; margin-top: 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">18 Sep, 2026</div>
+                </div>
+                
+                            </div>
+
+        </div>
+
+        <!-- মেনু বাটনগুলো -->
+        <div class="user-sidebar-menu">
+            <a href="dashboard">
+                <div class="menu-left"><i class="fa-solid fa-house icon" style="color: #3b82f6;"></i> হোম</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="my-profile">
+                <div class="menu-left"><i class="fa-solid fa-circle-user icon" style="color: #10b981;"></i> আমার প্রোফাইল</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="refer">
+                <div class="menu-left"><i class="fa-solid fa-users icon" style="color: #f59e0b;"></i> রেফার করুন</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="https://t.me/+ZyNB8WqmT5RjNTBl" target="_blank">
+                <div class="menu-left"><i class="fa-brands fa-telegram icon" style="color: #0284c7;"></i> টেলিগ্রাম ইনকাম রিভিউ গ্রুপ</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="https://whatsapp.com/channel/0029VbDo2Bl59Pwb1HNIMn2G" target="_blank">
+                <div class="menu-left"><i class="fa-brands fa-whatsapp icon" style="color: #22c55e;"></i> হোয়াটসঅ্যাপ ইনকাম রিভিউ গ্রুপ</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="support">
+                <div class="menu-left"><i class="fa-solid fa-headset icon" style="color: #6366f1;"></i> সাপোর্ট সেন্টার</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="about">
+                <div class="menu-left"><i class="fa-solid fa-circle-info icon" style="color: #06b6d4;"></i> আমাদের সম্পর্কে</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="secure">
+                <div class="menu-left"><i class="fa-solid fa-user-shield icon" style="color: #ec4899;"></i> গোপনীয়তা নীতি</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="change-password">
+                <div class="menu-left"><i class="fa-solid fa-key icon" style="color: #8b5cf6;"></i> পাসওয়ার্ড পরিবর্তন</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="index">
+                <div class="menu-left"><i class="fa-solid fa-globe icon" style="color: #14b8a6;"></i> ওয়েবসাইট</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="support">
+                <div class="menu-left"><i class="fa-solid fa-circle-question icon" style="color: #f97316;"></i> সাধারণ জিজ্ঞাসা</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="reviews">
+                <div class="menu-left"><i class="fa-solid fa-star icon" style="color: #eab308;"></i> রেটিংস & রিভিউ</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </a>
+            <a href="logout.php" class="logout-btn">
+                <div class="menu-left"><i class="fa-solid fa-power-off icon" style="color: #ef4444;"></i> লগ আউট</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyRefCode(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert("অ্যাফিলিয়েট আইডি সফলভাবে কপি হয়েছে: " + text);
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+</script>
+<style>
+.main-container-gmail { 
+    max-width: 480px; 
+    margin: 0 auto; 
+    padding: 15px; 
+    padding-bottom: 0px; 
+}
+
+/* টপ বাটনসমূহ */
+.telegram-banner-btn {
+    background: linear-gradient(90deg, #0088cc, #2AABEE);
+    color: #ffffff; 
+    text-decoration: none; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+    padding: 12px 15px; 
+    border-radius: 12px; 
+    font-weight: 700; 
+    font-size: 15px; 
+    margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(42, 171, 238, 0.3);
+    transition: 0.3s;
+}
+.telegram-banner-btn:hover { transform: translateY(-2px); }
+.telegram-banner-btn i { background: #ffffff; color: #0088cc; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; }
+
+.top-action-btn {
+    background: var(--card-bg);
+    color: var(--text-dark); 
+    text-decoration: none; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+    padding: 12px 15px; 
+    border-radius: 12px; 
+    font-weight: 700; 
+    font-size: 14px; 
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    border: 1px solid var(--input-border);
+    transition: 0.3s;
+}
+.top-action-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
+.top-action-btn i { background: linear-gradient(90deg, var(--primary), var(--secondary)); color: #fff; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; }
+
+/* কার্ড এবং ইনফো গ্রিড */
+.gmail-card { background: var(--card-bg); border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-align: center; border: 1px solid var(--input-border); }
+.gmail-card-title { font-size: 20px; font-weight: 800; color: var(--text-dark); margin-bottom: 12px; margin-top: 0; }
+.gmail-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px; }
+.report-time { color: var(--primary); font-weight: 700; font-size: 13px; margin-bottom: 20px; display: inline-block; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.info-box { background: var(--bg-color); border: 1px solid var(--input-border); border-radius: 12px; padding: 15px; }
+.info-box span { display: block; font-size: 12px; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; }
+.info-box strong { display: block; font-size: 18px; color: var(--text-dark); font-weight: 800; }
+
+.today-info-box { background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 12px; padding: 20px; color: #ffffff; text-align: left; position: relative; box-shadow: 0 4px 10px rgba(224, 21, 110, 0.2); }
+.today-info-box h4 { text-align: center; margin: 0 0 15px 0; font-size: 16px; }
+.password-box { background: rgba(255,255,255,0.2); border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.3); }
+.password-box span { font-size: 12px; opacity: 0.9; display: block; margin-bottom: 5px; font-weight: 700;}
+.password-box strong { font-size: 18px; letter-spacing: 1px; }
+.copy-btn { background: none; border: none; color: #ffffff; font-size: 20px; cursor: pointer; transition: 0.3s; }
+.copy-btn:active { transform: scale(0.9); }
+
+/* ফর্ম হেডার এবং ডেসক্রিপশন */
+.form-header-title { margin-top: 0; font-size: 18px; color: var(--text-dark); margin-bottom: 10px; }
+.form-header-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+/* কাজ অফ সেকশন */
+.task-off-wrapper { padding: 20px 0; }
+.task-off-icon { font-size: 45px; color: #ef4444; margin-bottom: 15px; }
+.task-off-title { margin-top: 0; font-size: 18px; color: var(--text-dark); margin-bottom: 10px; }
+.task-off-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-top: 10px; }
+
+/* ফর্ম ইনপুট ডিজাইন */
+.gmail-form-group { text-align: left; margin-bottom: 15px; }
+.gmail-form-group label { display: block; font-weight: 700; font-size: 14px; color: var(--text-dark); margin-bottom: 8px; }
+.gmail-form-control { width: 100%; box-sizing: border-box; padding: 14px 15px; border: 1px solid var(--input-border); border-radius: 8px; font-size: 14px; outline: none; transition: 0.3s; background: var(--bg-color); color: var(--text-dark);}
+.gmail-form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(224, 21, 110, 0.1); }
+
+.submit-btn { background: linear-gradient(90deg, var(--primary), var(--secondary)); color: #ffffff; width: 100%; padding: 14px; border: none; border-radius: 30px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.3s; box-shadow: 0 4px 10px rgba(224, 21, 110, 0.2);}
+.submit-btn:active { transform: scale(0.98); }
+
+.gmail-alert { padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 15px; text-align: left; }
+.gmail-alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.gmail-alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+</style>
+
+<div class="main-container-gmail">
+
+    <a href="https://youtu.be/SVnx1ErWc0s?si=_TNFeyqdNl_J_TQV" class="telegram-banner-btn" target="_blank">
+        <i class="fa-brands fa-telegram"></i> জিমেইল সেলস টিউটোরিয়াল
+    </a>
+
+    <a href="/gmail-history" class="top-action-btn">
+        <i class="fa-solid fa-clock-rotate-left"></i> জিমেইল সেলস হিস্ট্রি
+    </a>
+
+    
+    <div class="gmail-card">
+        <h2 class="gmail-card-title">জিমেইল মার্কেটিং</h2>
+        <p class="gmail-card-desc">সঠিক নিয়মে কাজ করুন অন্যথায় পেমেন্ট পাবেন না। যদি ভুল জিমেইল জমা দেন অথবা ভুল পাসওয়ার্ড জমা দেন তাহলে আপনার অ্যাকাউন্ট সাসপেন্ড হবে।</p>
+        
+        <div class="report-time">
+            <i class="fa-regular fa-clock"></i> রিপোর্ট টাইম: ২-৩ দিন
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <span>লিমিট</span>
+                <strong>1000</strong>
+            </div>
+            <div class="info-box">
+                <span>প্রাইস</span>
+                <strong>৳ 14.00</strong>
+            </div>
+        </div>
+
+        <div class="today-info-box">
+            <h4>আজকের তথ্য</h4>
+            <div class="password-box">
+                <div>
+                    <span>পাসওয়ার্ড</span>
+                    <strong id="todayPassword">@first212</strong>
+                </div>
+                <button class="copy-btn" onclick="copyPassword()" title="কপি করুন">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="gmail-card">
+                    <h3 class="form-header-title">জিমেইল সাবমিট ফর্ম</h3>
+            <p class="form-header-desc">নিচের ফর্মটি সঠিক তথ্য দিয়ে ফিলাপ করে সাবমিট করুন</p>
+            
+            <form action="" method="POST">
+                <div class="gmail-form-group">
+                    <label>জিমেইল লিখুন</label>
+                    <input type="email" name="gmail_address" class="gmail-form-control" placeholder="আপনার Gmail লিখুন" required>
+                </div>
+                <div class="gmail-form-group">
+                    <label>পাসওয়ার্ড লিখুন</label>
+                    <input type="text" name="gmail_password" class="gmail-form-control" placeholder="Gmail পাসওয়ার্ড লিখুন" required>
+                </div>
+                
+                <button type="submit" name="submit_gmail" class="submit-btn">
+                    <i class="fa-solid fa-check-square"></i> সাবমিট করুন
+                </button>
+            </form>
+            </div>
+
+</div>
+
+<script>
+function copyPassword() {
+    var passwordText = document.getElementById("todayPassword").innerText;
+    navigator.clipboard.writeText(passwordText).then(function() {
+        alert("পাসওয়ার্ড কপি করা হয়েছে: " + passwordText);
+    }, function() {
+        alert("কপি করতে সমস্যা হয়েছে!");
+    });
+}
+</script>
+
+        <div class="bottom-nav">
+            <a href="dashboard" class="bottom-nav-item active">
+                <i class="fa-solid fa-house"></i>
+                <span>হোম</span>
+            </a>
+            <a href="agent" class="bottom-nav-item">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>এজেন্ট</span>
+            </a>
+            <a href="online_shop" class="bottom-nav-item center-float">
+                <div class="float-icon-wrapper">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <span>প্রোডাক্ট</span>
+            </a>
+            <a href="wallet.php" class="bottom-nav-item">
+                <i class="fa-solid fa-wallet"></i>
+                <span>ওয়ালেট</span>
+            </a>
+            <a href="network" class="bottom-nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>নেটওয়ার্ক</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ভাসমান চ্যাট উইজেট ডিজাইন -->
+    <style>
+        #floating-contact-widget {
+            position: fixed; bottom: 100px; right: 20px; z-index: 99999;
+            display: flex; flex-direction: column; gap: 15px; cursor: grab; touch-action: none; 
+        }
+        #floating-contact-widget:active { cursor: grabbing; }
+
+        .widget-icon-wrapper { position: relative; }
+
+        .widget-icon {
+            width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; color: white !important; font-size: 28px; text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s;
+            user-select: none; -webkit-user-drag: none; cursor: pointer;
+        }
+        .widget-icon:hover { transform: scale(1.1); }
+
+        .wa-icon { background: #25D366; animation: pulse-wa 2s infinite; }
+        .tg-icon { background: #0088cc; animation: pulse-tg 2s infinite; animation-delay: 1s; }
+        .live-chat-icon { background: #0284c7; animation: pulse-lc 2s infinite; animation-delay: 0.5s; }
+
+        @keyframes pulse-wa { 0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
+        @keyframes pulse-tg { 0% { box-shadow: 0 0 0 0 rgba(0, 136, 204, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(0, 136, 204, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 136, 204, 0); } }
+        @keyframes pulse-lc { 0% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(2, 132, 199, 0); } 100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); } }
+    </style>
+
+    <!-- ভাসমান উইজেট HTML -->
+    <div id="floating-contact-widget">
+        
+        <!-- লাইভ চ্যাট / মেসেজ আইকন -->
+        <a href="https://t.me/FIRST_EARNING_ZONE_Live_Support" target="_blank" class="widget-icon live-chat-icon" title="Live Support">
+            <i class="fa-solid fa-comment-dots"></i>
+        </a>
+
+                    <a href="https://wa.me/8801831797467" target="_blank" class="widget-icon wa-icon" id="wa-btn" title="WhatsApp">
+                <i class="fa-brands fa-whatsapp"></i>
+            </a>
+        
+                    <a href="https://t.me/FIRST_EARNING_ZONE_Live_Support" target="_blank" class="widget-icon tg-icon" id="tg-btn" title="Telegram">
+                <i class="fa-brands fa-telegram"></i>
+            </a>
+            </div>
+
+    <script>
+        // পেজ লোডার ফিক্স 
+        function hideLoader() {
+            const loader = document.getElementById('page-loader');
+            if (loader && loader.style.display !== 'none') {
+                loader.style.opacity = '0';
+                setTimeout(function() { loader.style.display = 'none'; }, 500);
+            }
+        }
+        window.addEventListener('load', hideLoader);
+        document.addEventListener('DOMContentLoaded', hideLoader);
+        setTimeout(hideLoader, 1500); 
+
+        // থ্রি লাইন সাইডবার মেনু টগল ফিক্স
+        function toggleUserSidebar() {
+            let sidebar = document.getElementById('user-sidebar');
+            if (sidebar) {
+                sidebar.style.display = (sidebar.style.display === 'none' || sidebar.style.display === '') ? 'block' : 'none';
+            }
+        }
+
+        // রেফার কোড কপি ফিক্স
+        function copyRef(text) {
+            navigator.clipboard.writeText(text).then(() => { 
+                alert("Affiliate ID Copied: " + text); 
+            });
+        }
+
+        // ফর্ম রি-সাবমিট ফিক্স
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+
+        // ==========================================
+        // উইজেট ড্রাগ (হাত দিয়ে সরানোর) স্ক্রিপ্ট
+        // ==========================================
+        const widget = document.getElementById('floating-contact-widget');
+        let isDragging = false; let startX, startY, initialX, initialY, dragged = false;
+
+        widget.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        widget.addEventListener('touchstart', dragStart, {passive: false});
+        document.addEventListener('touchmove', drag, {passive: false});
+        document.addEventListener('touchend', dragEnd);
+
+        function dragStart(e) {
+            if (e.type === 'touchstart') { startX = e.touches[0].clientX; startY = e.touches[0].clientY; } 
+            else { startX = e.clientX; startY = e.clientY; }
+            initialX = widget.offsetLeft; initialY = widget.offsetTop;
+            isDragging = true; dragged = false; 
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            let currentX, currentY;
+            if (e.type === 'touchmove') { currentX = e.touches[0].clientX; currentY = e.touches[0].clientY; } 
+            else { currentX = e.clientX; currentY = e.clientY; }
+            let diffX = currentX - startX; let diffY = currentY - startY;
+            if (Math.abs(diffX) > 5 || Math.abs(diffY) > 5) { dragged = true; e.preventDefault(); }
+            widget.style.left = (initialX + diffX) + 'px'; widget.style.top = (initialY + diffY) + 'px';
+            widget.style.bottom = 'auto'; widget.style.right = 'auto';  
+        }
+
+        function dragEnd(e) { isDragging = false; }
+
+        const links = widget.querySelectorAll('a, .widget-icon');
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (dragged) { e.preventDefault(); e.stopPropagation(); }
+            });
+        });
+    </script>
+</body>
+</html>

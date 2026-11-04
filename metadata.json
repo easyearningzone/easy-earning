@@ -1,0 +1,6 @@
+{
+  "name": "EASY EARNING BD",
+  "description": "Complete professional online earning platform with micro-jobs, referral network, daily bonuses, wallet, bKash/Nagad/Rocket withdrawals, and admin portal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
