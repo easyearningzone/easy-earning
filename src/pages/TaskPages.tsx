@@ -5,6 +5,7 @@ import { store } from '../lib/store';
 import { Task } from '../types/database';
 
 export const MicroJobsPage: React.FC = () => {
+  const user = store.getCurrentUser();
   const tasks = store.getTasks().filter((t) => t.status === 'active');
   const [selectedCat, setSelectedCat] = useState('all');
 
@@ -14,9 +15,32 @@ export const MicroJobsPage: React.FC = () => {
     ? tasks
     : tasks.filter((t) => t.category.toLowerCase().includes(selectedCat.toLowerCase()));
 
+  const isVerified = user?.is_verified === 'verified';
+
   return (
     <div className="space-y-4">
       <Breadcrumb items={[{ label: 'মাইক্রো জবস (Micro Jobs)' }]} />
+
+      {/* Lock alert banner if unverified */}
+      {!isVerified && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500 via-rose-600 to-indigo-900 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+              <i className="fa-solid fa-lock"></i>
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">টাস্ক লকড: একাউন্ট ভেরিফিকেশন প্রয়োজন</h3>
+              <p className="text-xs text-rose-100">কাজ শুরু করতে মাত্র ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করুন।</p>
+            </div>
+          </div>
+          <a
+            href="/verification.html"
+            className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-transform active:scale-95 shrink-0 text-center"
+          >
+            ১০০ টাকা দিয়ে ভেরিফাই করুন 👉
+          </a>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -46,8 +70,13 @@ export const MicroJobsPage: React.FC = () => {
         {filtered.map((task) => (
           <div
             key={task.id}
-            className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs hover:shadow-sm hover:border-blue-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs hover:shadow-sm hover:border-blue-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative"
           >
+            {!isVerified && (
+              <span className="absolute top-2 right-2 text-[9px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <i className="fa-solid fa-lock text-[8px]"></i> লকড
+              </span>
+            )}
             <div className="flex items-start gap-3">
               <div className="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
                 <i className={task.icon || 'fa-solid fa-list-check'}></i>
@@ -83,12 +112,22 @@ export const MicroJobsPage: React.FC = () => {
               >
                 বিস্তারিত
               </a>
-              <a
-                href={`/submit-task.html?id=${task.id}`}
-                className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
-              >
-                কাজ শুরু করুন
-              </a>
+              {isVerified ? (
+                <a
+                  href={`/submit-task.html?id=${task.id}`}
+                  className="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
+                >
+                  কাজ শুরু করুন
+                </a>
+              ) : (
+                <a
+                  href="/verification.html"
+                  className="px-3.5 py-2 bg-gradient-to-r from-rose-600 to-indigo-900 hover:opacity-90 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  <i className="fa-solid fa-lock text-[10px]"></i>
+                  <span>ভেরিফাই করুন (৳১০০)</span>
+                </a>
+              )}
             </div>
           </div>
         ))}
@@ -98,9 +137,11 @@ export const MicroJobsPage: React.FC = () => {
 };
 
 export const JobDetailsPage: React.FC = () => {
+  const user = store.getCurrentUser();
   const params = new URLSearchParams(window.location.search);
   const taskId = params.get('id') || 't1';
   const task = store.getTasks().find((t) => t.id === taskId) || store.getTasks()[0];
+  const isVerified = user?.is_verified === 'verified';
 
   return (
     <div className="space-y-4">
@@ -110,6 +151,16 @@ export const JobDetailsPage: React.FC = () => {
           { label: task ? task.title : 'কাজের বিবরণ' },
         ]}
       />
+
+      {!isVerified && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+          <i className="fa-solid fa-lock text-amber-600 text-base mt-0.5"></i>
+          <div>
+            <span className="font-bold block">একাউন্ট ভেরিফিকেশন আবশ্যক!</span>
+            <span>এই কাজের প্রুফ জমা দিতে এবং রিওয়ার্ড পেতে ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই করতে হবে।</span>
+          </div>
+        </div>
+      )}
 
       {task && (
         <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
@@ -167,13 +218,23 @@ export const JobDetailsPage: React.FC = () => {
                 <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
               </a>
             )}
-            <a
-              href={`/submit-task.html?id=${task.id}`}
-              className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all"
-            >
-              <span>প্রুফ সাবমিট করুন</span>
-              <i className="fa-solid fa-arrow-right text-[10px]"></i>
-            </a>
+            {isVerified ? (
+              <a
+                href={`/submit-task.html?id=${task.id}`}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all"
+              >
+                <span>প্রুফ সাবমিট করুন</span>
+                <i className="fa-solid fa-arrow-right text-[10px]"></i>
+              </a>
+            ) : (
+              <a
+                href="/verification.html"
+                className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-indigo-900 hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all"
+              >
+                <i className="fa-solid fa-lock text-xs"></i>
+                <span>১০০ টাকা দিয়ে ভেরিফাই করুন 👉</span>
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -222,6 +283,49 @@ export const SubmitTaskPage: React.FC = () => {
       }
     }, 500);
   };
+
+  if (user?.is_verified !== 'verified') {
+    return (
+      <AuthGuard>
+        <div className="space-y-4 max-w-lg mx-auto">
+          <Breadcrumb
+            items={[
+              { label: 'মাইক্রো জবস', href: '/micro-jobs.html' },
+              { label: 'টাস্ক সাবমিশন' },
+            ]}
+          />
+          <div className="bg-white rounded-3xl p-6 border border-rose-200 shadow-sm text-center space-y-4">
+            <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
+              <i className="fa-solid fa-lock"></i>
+            </div>
+            <div>
+              <span className="text-[10px] font-extrabold bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full uppercase">
+                টাস্ক লকড
+              </span>
+              <h2 className="text-base font-black text-slate-900 mt-2">
+                কাজ জমা দিতে একাউন্ট ভেরিফাই করুন
+              </h2>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                নতুন একাউন্ট খোলার পর ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করতে হবে। ভেরিফিকেশন সম্পন্ন না হওয়া পর্যন্ত কোনো টাস্ক ওপেন হবে না।
+              </p>
+            </div>
+            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
+              ফি: ৳১০০ (বিকাশ, নগদ বা রকেটে পেমেন্ট করে TrxID দিয়ে ভেরিফাই করুন)
+            </div>
+            <div className="pt-2">
+              <a
+                href="/verification.html"
+                className="w-full py-3 bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2"
+              >
+                <i className="fa-solid fa-unlock"></i>
+                <span>১০০ টাকা দিয়ে একাউন্ট ভেরিফাই করুন 👉</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>

@@ -24,6 +24,7 @@ export const INITIAL_SETTINGS: SiteSettings = {
   gmail_today_password: '@easybd2026',
   gmail_tutorial_url: 'https://youtu.be/SVnx1ErWc0s?si=_TNFeyqdNl_J_TQV',
   gmail_report_time: '২-৩ দিন',
+  verification_fee: 100,
   payment_numbers: {
     bkash: '01712345678 (Personal)',
     nagad: '01812345678 (Personal)',

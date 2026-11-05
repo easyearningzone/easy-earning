@@ -38,8 +38,8 @@ export const RegisterPage: React.FC = () => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      const res = store.register(fullName, mobile, email, password, referralCode);
+    setTimeout(async () => {
+      const res = await store.register(fullName, mobile, email, password, referralCode);
       setLoading(false);
       if (res.success) {
         setSuccessMsg(res.message);
@@ -49,7 +49,7 @@ export const RegisterPage: React.FC = () => {
       } else {
         setErrorMsg(res.message);
       }
-    }, 500);
+    }, 100);
   };
 
   return (
@@ -182,8 +182,8 @@ export const LoginPage: React.FC = () => {
     setSuccessMsg(null);
 
     setLoading(true);
-    setTimeout(() => {
-      const res = store.login(email, password);
+    setTimeout(async () => {
+      const res = await store.login(email, password);
       setLoading(false);
       if (res.success) {
         setSuccessMsg(res.message);
@@ -193,7 +193,7 @@ export const LoginPage: React.FC = () => {
       } else {
         setErrorMsg(res.message);
       }
-    }, 500);
+    }, 100);
   };
 
   return (
@@ -258,30 +258,6 @@ export const LoginPage: React.FC = () => {
             {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'লগইন করুন'}
           </button>
         </form>
-
-        <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-1.5">
-          <span className="text-[11px] text-slate-500 font-bold block">⚡ দ্রুত টেস্ট ডেমো একাউন্ট:</span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => {
-                setEmail('user@easyearningbd.com');
-                setPassword('user123');
-              }}
-              className="py-1 px-2 bg-white text-slate-800 text-xs font-bold rounded-lg border border-slate-300 hover:border-blue-900 shadow-2xs"
-            >
-              👤 ইউজার ডেমো
-            </button>
-            <button
-              onClick={() => {
-                setEmail('admin@easyearningbd.com');
-                setPassword('admin123');
-              }}
-              className="py-1 px-2 bg-amber-50 text-amber-900 text-xs font-bold rounded-lg border border-amber-300 hover:bg-amber-100 shadow-2xs"
-            >
-              🛡️ এডমিন ডেমো
-            </button>
-          </div>
-        </div>
 
         <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-100">
           নতুন সদস্য?{' '}

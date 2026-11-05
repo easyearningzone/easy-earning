@@ -4,13 +4,13 @@ import { store } from '../../lib/store';
 import { Task, SiteSettings } from '../../types/database';
 
 export const AdminLoginPage: React.FC = () => {
-  const [email, setEmail] = useState('admin@easyearningbd.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('songworld061@gmail.com');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = store.login(email, password);
+    const res = await store.login(email, password);
     if (res.success && res.user?.role === 'admin') {
       window.location.href = '/admin/dashboard.html';
     } else {

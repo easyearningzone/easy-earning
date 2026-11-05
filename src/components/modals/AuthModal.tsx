@@ -48,8 +48,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
 
       setLoading(true);
-      setTimeout(() => {
-        const res = store.register(fullName, mobile, email, password, referralCode);
+      setTimeout(async () => {
+        const res = await store.register(fullName, mobile, email, password, referralCode);
         setLoading(false);
         if (res.success && res.user) {
           setSuccessMsg(res.message);
@@ -60,7 +60,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         } else {
           setErrorMsg(res.message);
         }
-      }, 500);
+      }, 100);
     } else if (mode === 'login') {
       if (!email.trim() || !password) {
         setErrorMsg('ইমেইল ও পাসওয়ার্ড প্রদান করুন।');
@@ -68,8 +68,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
 
       setLoading(true);
-      setTimeout(() => {
-        const res = store.login(email, password);
+      setTimeout(async () => {
+        const res = await store.login(email, password);
         setLoading(false);
         if (res.success && res.user) {
           setSuccessMsg(res.message);
@@ -80,7 +80,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         } else {
           setErrorMsg(res.message);
         }
-      }, 500);
+      }, 100);
     } else {
       // Forgot password
       if (!email.trim()) {

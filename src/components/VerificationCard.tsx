@@ -46,12 +46,12 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-slate-800">একাউন্ট ভেরিফাইড (KYC Approved)</h3>
+                <h3 className="font-bold text-sm text-slate-800">একাউন্ট ভেরিফাইড (৳১০০ পেইড)</h3>
                 <span className="text-[10px] bg-green-600 text-white px-2 py-0.5 rounded-full font-bold">
-                  সক্রিয়
+                  সকল কাজ আনলকড
                 </span>
               </div>
-              <p className="text-xs text-slate-600">আপনি সর্বোচ্চ লিমিটে আনলিমিটেড উইথড্র ও টাস্ক করতে পারবেন।</p>
+              <p className="text-xs text-slate-600">আপনি সর্বোচ্চ লিমিটে সকল টাস্ক ও আনলিমিটেড উইথড্র করতে পারবেন।</p>
             </div>
           </div>
           <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-bold">
@@ -68,18 +68,23 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-sm animate-pulse">
-              <i className="fa-solid fa-clock"></i>
+              <i className="fa-solid fa-hourglass-half"></i>
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-800">ভেরিফিকেশন পর্যালোচনায় আছে</h3>
-              <p className="text-xs text-slate-600">আপনার NID/ডকুমেন্ট আমাদের এডমিন টিম যাচাই করছে।</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-slate-800">১০০ টাকা ভেরিফিকেশন পর্যালোচনায় আছে</h3>
+                <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                  পেন্ডিং
+                </span>
+              </div>
+              <p className="text-xs text-slate-600">এডমিন আপনার পেমেন্ট TrxID চেক করছেন। অনুমোদন হলেই সব কাজ চালু হবে।</p>
             </div>
           </div>
           <button
             onClick={onOpenVerification}
-            className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-semibold rounded-lg transition-all"
+            className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 text-xs font-bold rounded-lg transition-all"
           >
-            বিবরণ দেখুন
+            স্ট্যাটাস দেখুন
           </button>
         </div>
       </div>
@@ -88,32 +93,32 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
 
   // Unverified or Rejected
   return (
-    <div className="rainbow-card p-4 shadow-sm border border-slate-200">
+    <div className="rainbow-card p-4 shadow-sm border border-rose-200 bg-rose-50/30">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl shadow-xs">
-            <i className="fa-solid fa-id-card"></i>
+          <div className="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shadow-xs">
+            <i className="fa-solid fa-lock"></i>
           </div>
           <div>
             <div className="flex items-center gap-1.5">
               <h3 className="font-bold text-sm text-slate-900">
-                {user.is_verified === 'rejected' ? 'ভেরিফিকেশন ব্যর্থ হয়েছে' : 'একাউন্ট ভেরিফাই করুন (KYC)'}
+                {user.is_verified === 'rejected' ? 'ভেরিফিকেশন বাতিল হয়েছে' : '১০০ টাকা দিয়ে একাউন্ট ভেরিফাই করুন'}
               </h3>
-              <span className="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">
-                {user.is_verified === 'rejected' ? 'প্রত্যাখ্যাত' : 'প্রয়োজনীয়'}
+              <span className="text-[10px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full">
+                {user.is_verified === 'rejected' ? 'বাতিল' : 'টাস্ক লকড 🔒'}
               </span>
             </div>
             <p className="text-xs text-slate-500 line-clamp-1">
-              উইথড্র দ্রুত পেতে ও সর্বোচ্চ বোনাস পেতে এখনই আইডি ভেরিফাই করুন।
+              ভেরিফিকেশন সম্পন্ন না হওয়া পর্যন্ত কোনো প্রকার টাস্ক ওপেন হবে না।
             </p>
           </div>
         </div>
 
         <button
           onClick={onOpenVerification}
-          className="whitespace-nowrap px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1"
+          className="whitespace-nowrap px-3.5 py-2 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1"
         >
-          <span>Verify Now</span>
+          <span>ভেরিফাই করুন (৳১০০)</span>
           <i className="fa-solid fa-arrow-right text-[10px]"></i>
         </button>
       </div>

@@ -318,6 +318,42 @@ export const TypingJobsPage: React.FC = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const targetText = 'EASY EARNING BD বাংলাদেশের একটি সেরা অনলাইন ইনকাম প্ল্যাটফর্ম।';
 
+  if (user?.is_verified !== 'verified') {
+    return (
+      <div className="space-y-4 max-w-lg mx-auto">
+        <Breadcrumb items={[{ label: 'সকল প্রজেক্ট', href: '/projects.html' }, { label: 'টাইপিং জবস' }]} />
+        <div className="bg-white rounded-3xl p-6 border border-rose-200 shadow-sm text-center space-y-4">
+          <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
+            <i className="fa-solid fa-lock"></i>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full uppercase">
+              টাস্ক লকড
+            </span>
+            <h2 className="text-base font-black text-slate-900 mt-2">
+              টাইপিং জবস আনলক করতে একাউন্ট ভেরিফাই করুন
+            </h2>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              নতুন একাউন্ট খোলার পর ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করতে হবে। ভেরিফিকেশন ছাড়া কোনো প্রকার টাস্ক ওপেন হবে না।
+            </p>
+          </div>
+          <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
+            ফি: ৳১০০ (বিকাশ, নগদ বা রকেটে পেমেন্ট করে TrxID দিয়ে ভেরিফাই করুন)
+          </div>
+          <div className="pt-2">
+            <a
+              href="/verification.html"
+              className="w-full py-3 bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2"
+            >
+              <i className="fa-solid fa-unlock"></i>
+              <span>১০০ টাকা দিয়ে একাউন্ট ভেরিফাই করুন 👉</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -381,6 +417,42 @@ export const QuizPage: React.FC = () => {
   const user = store.getCurrentUser();
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null);
   const [result, setResult] = useState<string | null>(null);
+
+  if (user?.is_verified !== 'verified') {
+    return (
+      <div className="space-y-4 max-w-lg mx-auto">
+        <Breadcrumb items={[{ label: 'সকল প্রজেক্ট', href: '/projects.html' }, { label: 'কুইজ টাস্ক' }]} />
+        <div className="bg-white rounded-3xl p-6 border border-rose-200 shadow-sm text-center space-y-4">
+          <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
+            <i className="fa-solid fa-lock"></i>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full uppercase">
+              টাস্ক লকড
+            </span>
+            <h2 className="text-base font-black text-slate-900 mt-2">
+              কুইজ জবস আনলক করতে একাউন্ট ভেরিফাই করুন
+            </h2>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              নতুন একাউন্ট খোলার পর ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করতে হবে। ভেরিফিকেশন ছাড়া কোনো প্রকার টাস্ক ওপেন হবে না।
+            </p>
+          </div>
+          <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
+            ফি: ৳১০০ (বিকাশ, নগদ বা রকেটে পেমেন্ট করে TrxID দিয়ে ভেরিফাই করুন)
+          </div>
+          <div className="pt-2">
+            <a
+              href="/verification.html"
+              className="w-full py-3 bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2"
+            >
+              <i className="fa-solid fa-unlock"></i>
+              <span>১০০ টাকা দিয়ে একাউন্ট ভেরিফাই করুন 👉</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = () => {
     if (!user) {

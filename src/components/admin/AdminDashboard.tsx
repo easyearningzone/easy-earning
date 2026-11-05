@@ -87,15 +87,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [sbTestResult, setSbTestResult] = useState<string | null>(null);
 
   // Verification review
-  const handleApproveKYC = (userId: string) => {
+  const handleApproveKYC = async (userId: string) => {
     if (!currentUser) return;
-    store.processVerification(currentUser.id, userId, true, 'এডমিন কর্তৃক যাচাই ও অনুমোদন সম্পন্ন।');
+    await store.processVerification(currentUser.id, userId, true, 'এডমিন কর্তৃক যাচাই ও অনুমোদন সম্পন্ন।');
   };
 
-  const handleRejectKYC = (userId: string) => {
+  const handleRejectKYC = async (userId: string) => {
     if (!currentUser) return;
     const reason = rejectReason[userId] || 'অস্পষ্ট ছবি বা অসত্য তথ্যের কারণে বাতিল।';
-    store.processVerification(currentUser.id, userId, false, reason);
+    await store.processVerification(currentUser.id, userId, false, reason);
   };
 
   // Withdrawal processing
@@ -670,54 +670,121 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* 4. USER VERIFICATION (KYC) */}
+          {/* 4. USER VERIFICATION (100 TK ACTIVATION) */}
           {activeTab === 'verification' && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">ইউজার ভেরিফিকেশন (KYC) অনুমোদন</h2>
-                <p className="text-xs text-slate-500">NID ও ডকুমেন্ট পর্যালোচনা করে একাউন্ট ভেরিফাই করুন</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900">১০০ টাকা একাউন্ট ভেরিফিকেশন অনুমোদন</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-black">
+                    পেন্ডিং: {users.filter((u) => u.is_verified === 'pending').length}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  ইউজারদের ১০০ টাকা পেমেন্ট ও TrxID যাচাই করে একাউন্ট ভেরিফাই করুন। অনুমোদন করলেই ইউজারের সকল টাস্ক ও কাজ স্বয়ংক্রিয়ভাবে খুলে যাবে।
+                </p>
               </div>
 
               <div className="space-y-3">
                 {users.filter((u) => u.is_verified === 'pending').length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs">কোনো পেন্ডিং ভেরিফিকেশন নেই।</div>
+                  <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 space-y-2">
+                    <i className="fa-solid fa-circle-check text-emerald-500 text-3xl"></i>
+                    <p className="text-slate-600 text-xs font-bold">বর্তমানে কোনো পেন্ডিং ভেরিফিকেশন রিকোয়েস্ট নেই।</p>
+                  </div>
                 ) : (
                   users
                     .filter((u) => u.is_verified === 'pending')
                     .map((u) => (
-                      <div key={u.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
-                        <div className="flex justify-between items-start">
+                      <div key={u.id} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
                           <div>
-                            <h4 className="text-sm font-bold text-slate-900">{u.full_name}</h4>
-                            <span className="text-xs text-slate-500">{u.email} &bull; {u.mobile}</span>
-                            <div className="text-xs font-semibold text-blue-900 mt-1">
-                              ডকুমেন্ট: {u.verification_doc_type?.toUpperCase()} &bull; নম্বর: {u.verification_doc_number}
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-bold text-slate-900">{u.full_name}</h4>
+                              <span className="text-[10px] bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded-full">
+                                কোড: {u.referral_code}
+                              </span>
                             </div>
+                            <span className="text-xs text-slate-500">
+                              {u.email} &bull; ফোন: {u.mobile}
+                            </span>
                           </div>
-                          <span className="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">
-                            পেন্ডিং
+                          <span className="text-[11px] bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-bold self-start sm:self-auto">
+                            ভেরিফিকেশন পেন্ডিং
                           </span>
                         </div>
 
+                        {/* Payment Details Box */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block">পেমেন্ট মেথড:</span>
+                            <span className="font-extrabold text-blue-950 uppercase text-xs flex items-center gap-1.5 mt-0.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                              {u.verification_payment_method || 'bKash'}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block">প্রেরক নাম্বার (Sender):</span>
+                            <span className="font-mono font-bold text-slate-900 text-xs mt-0.5 block">
+                              {u.verification_sender_number || u.mobile || 'N/A'}
+                            </span>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">Transaction ID (TrxID):</span>
+                              {u.verification_trx_id && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(u.verification_trx_id!);
+                                    alert('TrxID কপি করা হয়েছে!');
+                                  }}
+                                  className="text-[10px] text-blue-700 hover:underline font-bold"
+                                >
+                                  কপি
+                                </button>
+                              )}
+                            </div>
+                            <span className="font-mono font-extrabold text-emerald-700 text-xs mt-0.5 block">
+                              {u.verification_trx_id || 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Screenshot if available */}
                         {u.verification_doc_image && (
-                          <div className="w-48 h-32 rounded-xl overflow-hidden border border-slate-300">
-                            <img src={u.verification_doc_image} alt="" className="w-full h-full object-cover" />
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block">পেমেন্ট প্রমাণ / স্ক্রিনশট:</span>
+                            <div className="w-48 h-32 rounded-xl overflow-hidden border border-slate-300">
+                              <img src={u.verification_doc_image} alt="Proof" className="w-full h-full object-cover" />
+                            </div>
                           </div>
                         )}
 
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleApproveKYC(u.id)}
-                            className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg text-xs"
-                          >
-                            অনুমোদন করুন (Verify)
-                          </button>
-                          <button
-                            onClick={() => handleRejectKYC(u.id)}
-                            className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs"
-                          >
-                            বাতিল করুন
-                          </button>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                          <input
+                            type="text"
+                            placeholder="বাতিল করার কারণ লিখুন (যদি বাতিল করতে চান)..."
+                            value={rejectReason[u.id] || ''}
+                            onChange={(e) => setRejectReason({ ...rejectReason, [u.id]: e.target.value })}
+                            className="px-3 py-1.5 text-xs rounded-xl border border-slate-300 bg-slate-50 flex-1 outline-none"
+                          />
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={() => handleApproveKYC(u.id)}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow-xs flex items-center gap-1.5 transition-all active:scale-95"
+                            >
+                              <i className="fa-solid fa-unlock"></i>
+                              <span>অনুমোদন ও কাজ আনলক করুন</span>
+                            </button>
+                            <button
+                              onClick={() => handleRejectKYC(u.id)}
+                              className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all active:scale-95"
+                            >
+                              বাতিল
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -1330,17 +1397,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 )}
               </div>
 
-              {/* Instructions */}
-              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 text-xs text-blue-900 space-y-2">
-                <span className="font-bold block flex items-center gap-1.5">
-                  <i className="fa-solid fa-circle-info"></i>
-                  <span>Supabase SQL Editor-এ রান করার নিয়ম:</span>
-                </span>
+              {/* Instructions & Direct Copy */}
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200 text-xs text-blue-900 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1.5">
+                    <i className="fa-solid fa-circle-info"></i>
+                    <span>Supabase SQL Editor-এ রান করার নিয়ম:</span>
+                  </span>
+                  <a
+                    href="https://supabase.com/dashboard/project/vdidrydxmfdmhugkdofe/sql/new"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-xs transition-all flex items-center gap-1"
+                  >
+                    <span>Supabase SQL Editor ওপেন করুন</span>
+                    <i className="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                  </a>
+                </div>
                 <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-700 leading-relaxed">
-                  <li>আপনার Supabase ড্যাশবোর্ডে (<a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="text-blue-700 underline font-bold">supabase.com/dashboard</a>) লগইন করুন।</li>
-                  <li>বামের মেন্যু থেকে <strong>SQL Editor</strong>-এ ক্লিক করুন।</li>
-                  <li>নতুন কুয়েরি খুলে আমাদের <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-blue-900 border border-blue-200">/supabase/schema.sql</code> ফাইলের সম্পূর্ণ কোড পেস্ট করে <strong>Run</strong> চাপুন (এটি ২২টি টেবিল ও RLS তৈরি করবে)।</li>
-                  <li>এরপর <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-blue-900 border border-blue-200">/supabase/seed.sql</code> ফাইলের প্রাথমিক ডাটা পেস্ট করে <strong>Run</strong> চাপুন।</li>
+                  <li>আপনার Supabase ড্যাশবোর্ডে (<a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="text-blue-700 underline font-bold">supabase.com/dashboard</a>) যান।</li>
+                  <li>বামের মেন্যু থেকে <strong>SQL Editor</strong>-এ ক্লিক করুন এবং একটি <strong>New query</strong> খুলুন।</li>
+                  <li>প্রজেক্টের <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-blue-900 border border-blue-200">/supabase/schema.sql</code> ফাইলের সম্পূর্ণ কোড কপি করে পেস্ট করুন।</li>
+                  <li>সবুজ <strong>Run</strong> বাটনে ক্লিক করুন। এটি সকল পুরনো কনস্ট্রেইন্ট ড্রপ করে একসাথে ২৩টি টেবিল, ওয়ালেট লেজার, RLS পলিসি এবং সিড ডাটা তৈরি করে দেবে।</li>
                 </ol>
               </div>
             </div>

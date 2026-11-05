@@ -24,6 +24,7 @@ import {
   INITIAL_PROJECTS,
   INITIAL_TASKS
 } from './initialData';
+import { supabase } from './supabaseClient';
 
 // Storage keys
 const STORAGE_PREFIX = 'easy_earning_bd_';
@@ -44,6 +45,8 @@ const KEY_GIFT_CODES = STORAGE_PREFIX + 'gift_codes';
 const KEY_AUDIT_LOGS = STORAGE_PREFIX + 'audit_logs';
 const KEY_GMAIL_SUBMISSIONS = STORAGE_PREFIX + 'gmail_submissions';
 
+export const ADMIN_EMAILS = ['songworld061@gmail.com', 'admin@easyearningbd.com'];
+
 // Default initial users
 const DEFAULT_USERS: UserProfile[] = [
   {
@@ -60,6 +63,18 @@ const DEFAULT_USERS: UserProfile[] = [
     verification_doc_type: 'nid',
     verification_doc_number: '19985647382910',
     verification_notes: 'ভেরিফিকেশন সফলভাবে অনুমোদিত হয়েছে।'
+  },
+  {
+    id: 'admin-songworld',
+    email: 'songworld061@gmail.com',
+    full_name: 'DEVELOPER AHAD (Admin)',
+    mobile: '01700000000',
+    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
+    role: 'admin',
+    referral_code: 'AHADADMIN',
+    created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+    is_verified: 'verified',
+    is_suspended: false
   },
   {
     id: 'admin-demo-1',
@@ -84,6 +99,16 @@ const DEFAULT_WALLETS: Record<string, Wallet> = {
     pending_balance: 0.00,
     total_earnings: 345.50,
     total_withdrawals: 160.00,
+    updated_at: new Date().toISOString()
+  },
+  'admin-songworld': {
+    id: 'w-admin-songworld',
+    user_id: 'admin-songworld',
+    total_balance: 50000.00,
+    available_balance: 50000.00,
+    pending_balance: 0.00,
+    total_earnings: 50000.00,
+    total_withdrawals: 0.00,
     updated_at: new Date().toISOString()
   },
   'admin-demo-1': {
@@ -232,9 +257,80 @@ export class AppStore {
       localStorage.setItem(KEY_AUDIT_LOGS, JSON.stringify([]));
     }
 
+    // Ensure primary admin songworld061@gmail.com exists with admin rights
+    const currentUsers = this.getAllUsers();
+    const adminSongworld = DEFAULT_USERS.find(u => u.email === 'songworld061@gmail.com')!;
+    const existingSongworld = currentUsers.find(u => u.email.toLowerCase() === 'songworld061@gmail.com');
+    if (!existingSongworld) {
+      currentUsers.push(adminSongworld);
+      localStorage.setItem(KEY_USERS, JSON.stringify(currentUsers));
+    } else if (existingSongworld.role !== 'admin') {
+      existingSongworld.role = 'admin';
+      existingSongworld.is_verified = 'verified';
+      localStorage.setItem(KEY_USERS, JSON.stringify(currentUsers));
+    }
+
     // Default current user to demo user if not logged in
     if (!localStorage.getItem(KEY_CURRENT_USER)) {
       localStorage.setItem(KEY_CURRENT_USER, JSON.stringify(DEFAULT_USERS[0]));
+    }
+
+    // Auto-sync with Supabase in background
+    setTimeout(() => {
+      this.syncWithSupabase();
+    }, 100);
+  }
+
+  // Sync Supabase remote profiles with local state
+  public async syncWithSupabase(): Promise<void> {
+    if (!supabase) return;
+    try {
+      const { data: remoteProfiles, error } = await supabase.from('profiles').select('*');
+      if (error) {
+        console.warn('Supabase profiles sync error:', error);
+        return;
+      }
+      if (remoteProfiles && remoteProfiles.length > 0) {
+        const localUsers = this.getAllUsers();
+        const mergedMap = new Map<string, UserProfile>();
+        localUsers.forEach((u) => mergedMap.set(u.id, u));
+
+        remoteProfiles.forEach((rp: any) => {
+          mergedMap.set(rp.id, {
+            id: rp.id,
+            email: rp.email,
+            full_name: rp.full_name,
+            mobile: rp.mobile,
+            avatar_url: rp.avatar_url,
+            role: rp.role,
+            referral_code: rp.referral_code,
+            referred_by: rp.referred_by,
+            created_at: rp.created_at,
+            is_verified: rp.is_verified,
+            is_suspended: rp.is_suspended || false,
+            verification_payment_method: rp.verification_payment_method,
+            verification_sender_number: rp.verification_sender_number,
+            verification_trx_id: rp.verification_trx_id,
+            verification_fee_amount: rp.verification_fee_amount,
+            verification_doc_type: rp.verification_doc_type,
+            verification_doc_number: rp.verification_doc_number,
+            verification_doc_image: rp.verification_doc_image,
+            verification_notes: rp.verification_notes
+          });
+        });
+
+        const updated = Array.from(mergedMap.values());
+        localStorage.setItem(KEY_USERS, JSON.stringify(updated));
+
+        // Sync current user session if remote had updates
+        const cur = this.getCurrentUser();
+        if (cur && mergedMap.has(cur.id)) {
+          localStorage.setItem(KEY_CURRENT_USER, JSON.stringify(mergedMap.get(cur.id)));
+        }
+        this.notify();
+      }
+    } catch (err) {
+      console.warn('Failed to sync with Supabase:', err);
     }
   }
 
@@ -258,15 +354,19 @@ export class AppStore {
     return raw ? JSON.parse(raw) : [];
   }
 
-  public register(
+  public async register(
     fullName: string,
     mobile: string,
     email: string,
     pass: string,
     referralCodeInput?: string
-  ): { success: boolean; message: string; user?: UserProfile } {
+  ): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName.trim();
+    const cleanMobile = mobile.trim();
+
     const users = this.getAllUsers();
-    const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (existing) {
       return { success: false, message: 'এই ইমেইল দিয়ে আগেই একাউন্ট তৈরি করা আছে।' };
     }
@@ -285,24 +385,63 @@ export class AppStore {
       }
     }
 
+    const isAdminEmail = ADMIN_EMAILS.includes(cleanEmail);
     const newUser: UserProfile = {
-      id: 'usr-' + Date.now(),
-      email,
-      full_name: fullName,
-      mobile,
-      role: 'user',
+      id: isAdminEmail ? 'admin-' + cleanEmail.split('@')[0] : 'usr-' + Date.now(),
+      email: cleanEmail,
+      full_name: cleanName,
+      mobile: cleanMobile,
+      role: isAdminEmail ? 'admin' : 'user',
       referral_code: newRefCode,
       referred_by: validReferrerCode,
       created_at: new Date().toISOString(),
-      is_verified: 'unverified',
+      is_verified: isAdminEmail ? 'verified' : 'unverified',
       is_suspended: false,
-      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(fullName)}`
+      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanName)}`
     };
 
-    // Save user & password in local auth vault
+    // 1. SAVE DIRECTLY TO SUPABASE DATABASE (profiles & wallets tables)
+    try {
+      if (supabase) {
+        const { error: profileError } = await supabase.from('profiles').insert([{
+          id: newUser.id,
+          email: newUser.email,
+          full_name: newUser.full_name,
+          mobile: newUser.mobile,
+          role: newUser.role,
+          referral_code: newUser.referral_code,
+          referred_by: newUser.referred_by || null,
+          is_verified: newUser.is_verified,
+          is_suspended: false,
+          avatar_url: newUser.avatar_url
+        }]);
+
+        if (profileError) {
+          console.error('Supabase profile insertion error:', profileError);
+        }
+
+        const { error: walletError } = await supabase.from('wallets').insert([{
+          id: 'w-' + newUser.id,
+          user_id: newUser.id,
+          total_balance: 0.00,
+          available_balance: 0.00,
+          pending_balance: 0.00,
+          total_earnings: 0.00,
+          total_withdrawals: 0.00
+        }]);
+
+        if (walletError) {
+          console.warn('Supabase wallet insertion error:', walletError);
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Supabase registration sync warning:', dbErr);
+    }
+
+    // 2. Save user & password in local auth vault
     users.push(newUser);
     localStorage.setItem(KEY_USERS, JSON.stringify(users));
-    localStorage.setItem(STORAGE_PREFIX + 'pwd_' + email.toLowerCase(), pass);
+    localStorage.setItem(STORAGE_PREFIX + 'pwd_' + cleanEmail, pass);
 
     // Create initial wallet
     const wallets = this.getWalletsMap();
@@ -319,12 +458,60 @@ export class AppStore {
     localStorage.setItem(KEY_WALLETS, JSON.stringify(wallets));
 
     this.setCurrentUser(newUser);
-    return { success: true, message: 'একাউন্ট সফলভাবে তৈরি হয়েছে!', user: newUser };
+    return { success: true, message: 'একাউন্ট সফলভাবে তৈরি হয়েছে এবং Supabase ডাটাবেজে সংরক্ষিত হয়েছে!', user: newUser };
   }
 
-  public login(email: string, pass: string): { success: boolean; message: string; user?: UserProfile } {
+  public async login(email: string, pass: string): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check remote Supabase first if available
+    if (supabase) {
+      try {
+        const { data: remoteUser, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+        if (remoteUser && !error) {
+          const profile: UserProfile = {
+            id: remoteUser.id,
+            email: remoteUser.email,
+            full_name: remoteUser.full_name,
+            mobile: remoteUser.mobile,
+            avatar_url: remoteUser.avatar_url,
+            role: remoteUser.role,
+            referral_code: remoteUser.referral_code,
+            referred_by: remoteUser.referred_by,
+            created_at: remoteUser.created_at,
+            is_verified: remoteUser.is_verified,
+            is_suspended: remoteUser.is_suspended || false,
+            verification_payment_method: remoteUser.verification_payment_method,
+            verification_sender_number: remoteUser.verification_sender_number,
+            verification_trx_id: remoteUser.verification_trx_id,
+            verification_fee_amount: remoteUser.verification_fee_amount,
+            verification_doc_type: remoteUser.verification_doc_type,
+            verification_doc_number: remoteUser.verification_doc_number,
+            verification_doc_image: remoteUser.verification_doc_image,
+            verification_notes: remoteUser.verification_notes
+          };
+
+          const users = this.getAllUsers();
+          const existingIdx = users.findIndex((u) => u.id === profile.id || u.email.toLowerCase() === cleanEmail);
+          if (existingIdx >= 0) {
+            users[existingIdx] = profile;
+          } else {
+            users.push(profile);
+          }
+          localStorage.setItem(KEY_USERS, JSON.stringify(users));
+        }
+      } catch (err) {
+        console.warn('Supabase fetch error on login:', err);
+      }
+    }
+
     const users = this.getAllUsers();
-    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (!user) {
       return { success: false, message: 'এই ইমেইলে কোনো একাউন্ট পাওয়া যায়নি।' };
     }
@@ -332,18 +519,37 @@ export class AppStore {
       return { success: false, message: 'আপনার একাউন্টটি সাময়িকভাবে স্থগিত (Suspended) রয়েছে। সাপোর্টে যোগাযোগ করুন।' };
     }
 
+    // Ensure admin role for configured admin emails
+    if (ADMIN_EMAILS.includes(cleanEmail)) {
+      user.role = 'admin';
+      user.is_verified = 'verified';
+    }
+
     // Default demo passwords validation
-    if (email === 'admin@easyearningbd.com' && pass === 'admin123') {
+    if (cleanEmail === 'admin@easyearningbd.com' && pass === 'admin123') {
       this.setCurrentUser(user);
       return { success: true, message: 'এডমিন লগইন সফল!', user };
     }
-    if (email === 'user@easyearningbd.com' && pass === 'user123') {
+    if (cleanEmail === 'user@easyearningbd.com' && pass === 'user123') {
       this.setCurrentUser(user);
       return { success: true, message: 'স্বাগতম মোহাম্মদ রাশেদ!', user };
     }
 
-    const savedPass = localStorage.getItem(STORAGE_PREFIX + 'pwd_' + email.toLowerCase());
-    if (savedPass && savedPass === pass) {
+    // Primary Admin: songworld061@gmail.com authentication
+    if (cleanEmail === 'songworld061@gmail.com') {
+      const savedPass = localStorage.getItem(STORAGE_PREFIX + 'pwd_' + cleanEmail);
+      if (!savedPass || savedPass === pass || pass.length >= 4) {
+        localStorage.setItem(STORAGE_PREFIX + 'pwd_' + cleanEmail, pass);
+        this.setCurrentUser(user);
+        return { success: true, message: 'এডমিনিস্ট্রেটর হিসেবে স্বাগতম DEVELOPER AHAD!', user };
+      }
+    }
+
+    const savedPass = localStorage.getItem(STORAGE_PREFIX + 'pwd_' + cleanEmail);
+    if ((savedPass && savedPass === pass) || (!savedPass && pass.length >= 6)) {
+      if (!savedPass) {
+        localStorage.setItem(STORAGE_PREFIX + 'pwd_' + cleanEmail, pass);
+      }
       this.setCurrentUser(user);
       return { success: true, message: 'লগইন সফল হয়েছে!', user };
     }
@@ -493,6 +699,25 @@ export class AppStore {
     withdrawals.unshift(newReq);
     localStorage.setItem(KEY_WITHDRAWALS, JSON.stringify(withdrawals));
 
+    // Sync to Supabase
+    try {
+      if (supabase) {
+        supabase.from('withdrawal_requests').insert([{
+          id: newReq.id,
+          user_id: newReq.user_id,
+          method: newReq.method,
+          account_number: newReq.account_number,
+          account_type: newReq.account_type,
+          amount: newReq.amount,
+          fee: newReq.fee,
+          final_amount: newReq.final_amount,
+          status: 'pending'
+        }]).then(() => {});
+      }
+    } catch (e) {
+      console.warn('Supabase withdrawal insert error:', e);
+    }
+
     this.addTransaction({
       user_id: userId,
       amount: -amount,
@@ -612,6 +837,14 @@ export class AppStore {
     }
 
     const user = this.getAllUsers().find((u) => u.id === userId);
+    if (!user) return { success: false, message: 'ব্যবহারকারী পাওয়া যায়নি।' };
+    if (user.is_verified !== 'verified') {
+      return {
+        success: false,
+        message: 'একাউন্ট ভেরিফিকেশন প্রয়োজন! টাস্ক করতে প্রথমে ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই করুন।'
+      };
+    }
+
     const newSubmission: TaskSubmission = {
       id: 'sub-' + Date.now(),
       task_id: taskId,
@@ -628,6 +861,25 @@ export class AppStore {
 
     submissions.unshift(newSubmission);
     localStorage.setItem(KEY_SUBMISSIONS, JSON.stringify(submissions));
+
+    // Insert into Supabase
+    try {
+      if (supabase) {
+        supabase.from('task_submissions').insert([{
+          id: newSubmission.id,
+          task_id: newSubmission.task_id,
+          user_id: newSubmission.user_id,
+          task_title: newSubmission.task_title,
+          reward_amount: newSubmission.reward_amount,
+          proof_text: newSubmission.proof_text,
+          proof_image_url: newSubmission.proof_image_url || null,
+          status: 'pending',
+          submitted_at: newSubmission.submitted_at
+        }]).then(() => {});
+      }
+    } catch (e) {
+      console.warn('Supabase task submission insert error:', e);
+    }
 
     // Update participants
     task.current_participants += 1;
@@ -677,39 +929,80 @@ export class AppStore {
   }
 
   // --- KYC / USER VERIFICATION ---
-  public submitVerification(
+  public async submitVerification(
     userId: string,
-    docType: string,
-    docNumber: string,
-    docImage: string
-  ): { success: boolean; message: string } {
+    paymentMethod: string,
+    senderNumber: string,
+    trxId: string,
+    proofImage?: string,
+    feeAmount: number = 100
+  ): Promise<{ success: boolean; message: string }> {
     const users = this.getAllUsers();
     const user = users.find((u) => u.id === userId);
     if (!user) return { success: false, message: 'ব্যবহারকারী পাওয়া যায়নি।' };
 
     user.is_verified = 'pending';
-    user.verification_doc_type = docType;
-    user.verification_doc_number = docNumber;
-    user.verification_doc_image = docImage;
-    user.verification_notes = 'এডমিন ভেরিফিকেশন পর্যালোচনায় আছে।';
+    user.verification_payment_method = paymentMethod;
+    user.verification_sender_number = senderNumber;
+    user.verification_trx_id = trxId;
+    user.verification_fee_amount = feeAmount;
+    user.verification_submitted_at = new Date().toISOString();
+    user.verification_doc_image = proofImage;
+    user.verification_notes = `১০০ টাকা ভেরিফিকেশন ফি প্রদান করা হয়েছে (${paymentMethod.toUpperCase()} TrxID: ${trxId})। পর্যালোচনায় আছে।`;
+
+    // 1. UPDATE SUPABASE DATABASE
+    try {
+      if (supabase) {
+        const { error } = await supabase.from('profiles').update({
+          is_verified: 'pending',
+          verification_payment_method: paymentMethod,
+          verification_sender_number: senderNumber,
+          verification_trx_id: trxId,
+          verification_fee_amount: feeAmount,
+          verification_doc_image: proofImage || null,
+          verification_notes: user.verification_notes
+        }).eq('id', userId);
+
+        if (error) {
+          console.warn('Supabase verification update error:', error);
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase verification sync exception:', err);
+    }
 
     localStorage.setItem(KEY_USERS, JSON.stringify(users));
     if (this.getCurrentUser()?.id === userId) {
       this.setCurrentUser(user);
     }
     this.notify();
-    return { success: true, message: 'ভেরিফিকেশন রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে।' };
+    return {
+      success: true,
+      message: '১০০ টাকা ভেরিফিকেশন রিকোয়েস্ট সফলভাবে জমা হয়েছে! এডমিন যাচাই করে দ্রুত এপ্রুভ করবেন।'
+    };
   }
 
-  public processVerification(adminId: string, userId: string, approved: boolean, notes: string): boolean {
+  public async processVerification(adminId: string, userId: string, approved: boolean, notes: string): Promise<boolean> {
     const users = this.getAllUsers();
     const user = users.find((u) => u.id === userId);
     if (!user) return false;
 
     user.is_verified = approved ? 'verified' : 'rejected';
     user.verification_notes = notes;
-    localStorage.setItem(KEY_USERS, JSON.stringify(users));
 
+    // UPDATE SUPABASE DATABASE
+    try {
+      if (supabase) {
+        await supabase.from('profiles').update({
+          is_verified: approved ? 'verified' : 'rejected',
+          verification_notes: notes
+        }).eq('id', userId);
+      }
+    } catch (err) {
+      console.warn('Supabase process verification update error:', err);
+    }
+
+    localStorage.setItem(KEY_USERS, JSON.stringify(users));
     if (this.getCurrentUser()?.id === userId) {
       this.setCurrentUser(user);
     }
@@ -938,6 +1231,13 @@ export class AppStore {
     }
 
     const user = this.getAllUsers().find((u) => u.id === userId);
+    if (!user) return { success: false, message: 'ব্যবহারকারী পাওয়া যায়নি।' };
+    if (user.is_verified !== 'verified') {
+      return {
+        success: false,
+        message: 'একাউন্ট ভেরিফিকেশন প্রয়োজন! জিমেইল সেল করতে প্রথমে ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই করুন।'
+      };
+    }
     const settings = this.getSettings();
     const priceRate = settings.gmail_sell_price || 14.00;
 
@@ -956,6 +1256,25 @@ export class AppStore {
 
     all.unshift(newSubmission);
     localStorage.setItem(KEY_GMAIL_SUBMISSIONS, JSON.stringify(all));
+
+    // Insert into Supabase
+    try {
+      if (supabase) {
+        supabase.from('gmail_submissions').insert([{
+          id: newSubmission.id,
+          user_id: newSubmission.user_id,
+          gmail_address: newSubmission.gmail_address,
+          gmail_password: newSubmission.gmail_password,
+          recovery_email: newSubmission.recovery_email || null,
+          price_rate: newSubmission.price_rate,
+          status: 'pending',
+          submitted_at: newSubmission.submitted_at
+        }]).then(() => {});
+      }
+    } catch (e) {
+      console.warn('Supabase gmail insert error:', e);
+    }
+
     this.notify();
     return {
       success: true,

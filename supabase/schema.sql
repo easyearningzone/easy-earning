@@ -1,36 +1,64 @@
 -- ==============================================================================
--- EASY EARNING BD — COMPLETE POSTGRESQL & SUPABASE DATABASE SCHEMA
+-- EASY EARNING BD — COMPLETE POSTGRESQL & SUPABASE DATABASE SETUP
 -- Developed by DEVELOPER AHAD
--- Includes: 22 Tables, RLS Policies, Indexes, Triggers, & Stored Procedures
+-- All-in-One: Drop old tables, Create 23 Tables, Ledger, RLS & Seed Data
 -- ==============================================================================
 
 -- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. USER PROFILES TABLE
-CREATE TABLE IF NOT EXISTS public.profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+-- 2. CLEAN UP OLD INCOMPATIBLE TABLES (IF ANY)
+DROP TABLE IF EXISTS public.gmail_submissions CASCADE;
+DROP TABLE IF EXISTS public.task_submissions CASCADE;
+DROP TABLE IF EXISTS public.tasks CASCADE;
+DROP TABLE IF EXISTS public.wallet_transactions CASCADE;
+DROP TABLE IF EXISTS public.withdrawal_requests CASCADE;
+DROP TABLE IF EXISTS public.wallets CASCADE;
+DROP TABLE IF EXISTS public.bonus_claims CASCADE;
+DROP TABLE IF EXISTS public.gift_code_redemptions CASCADE;
+DROP TABLE IF EXISTS public.gift_codes CASCADE;
+DROP TABLE IF EXISTS public.verification_requests CASCADE;
+DROP TABLE IF EXISTS public.support_tickets CASCADE;
+DROP TABLE IF EXISTS public.reviews CASCADE;
+DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.site_settings CASCADE;
+DROP TABLE IF EXISTS public.banners CASCADE;
+DROP TABLE IF EXISTS public.notices CASCADE;
+DROP TABLE IF EXISTS public.social_links CASCADE;
+DROP TABLE IF EXISTS public.projects CASCADE;
+DROP TABLE IF EXISTS public.project_categories CASCADE;
+DROP TABLE IF EXISTS public.audit_logs CASCADE;
+DROP TABLE IF EXISTS public.referrals CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- 3. USER PROFILES TABLE (Supports both Supabase Auth UUID & custom IDs)
+CREATE TABLE public.profiles (
+    id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     full_name TEXT NOT NULL,
     mobile TEXT NOT NULL,
     avatar_url TEXT DEFAULT 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
     role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     referral_code TEXT UNIQUE NOT NULL,
-    referred_by TEXT REFERENCES public.profiles(referral_code),
+    referred_by TEXT,
     is_verified TEXT NOT NULL DEFAULT 'unverified' CHECK (is_verified IN ('unverified', 'pending', 'verified', 'rejected')),
     is_suspended BOOLEAN NOT NULL DEFAULT FALSE,
     verification_doc_type TEXT,
     verification_doc_number TEXT,
     verification_doc_image TEXT,
     verification_notes TEXT,
+    verification_payment_method TEXT,
+    verification_sender_number TEXT,
+    verification_trx_id TEXT,
+    verification_fee_amount NUMERIC(10, 2) DEFAULT 100.00,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 3. WALLETS TABLE (One wallet per profile, immutable via server-side balance updates)
-CREATE TABLE IF NOT EXISTS public.wallets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID UNIQUE NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+-- 4. WALLETS TABLE (One wallet per profile, matched TEXT user_id)
+CREATE TABLE public.wallets (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    user_id TEXT UNIQUE NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     total_balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00 CHECK (total_balance >= 0),
     available_balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00 CHECK (available_balance >= 0),
     pending_balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00 CHECK (pending_balance >= 0),
@@ -39,10 +67,10 @@ CREATE TABLE IF NOT EXISTS public.wallets (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 4. WALLET TRANSACTIONS TABLE (Immutable ledger)
-CREATE TABLE IF NOT EXISTS public.wallet_transactions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+-- 5. WALLET TRANSACTIONS TABLE (Immutable ledger)
+CREATE TABLE public.wallet_transactions (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     amount NUMERIC(12, 2) NOT NULL,
     type TEXT NOT NULL CHECK (type IN (
         'deposit', 'task_reward', 'referral_bonus', 'daily_bonus', 
@@ -54,10 +82,10 @@ CREATE TABLE IF NOT EXISTS public.wallet_transactions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. WITHDRAWAL REQUESTS TABLE
-CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+-- 6. WITHDRAWAL REQUESTS TABLE
+CREATE TABLE public.withdrawal_requests (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     method TEXT NOT NULL CHECK (method IN ('bkash', 'nagad', 'rocket')),
     account_number TEXT NOT NULL,
     account_type TEXT DEFAULT 'personal' CHECK (account_type IN ('personal', 'agent')),
@@ -71,37 +99,9 @@ CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
     processed_at TIMESTAMPTZ
 );
 
--- 6. PROJECT CATEGORIES
-CREATE TABLE IF NOT EXISTS public.project_categories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name TEXT NOT NULL,
-    name_bn TEXT NOT NULL,
-    slug TEXT UNIQUE NOT NULL,
-    icon TEXT,
-    order_index INT DEFAULT 0
-);
-
--- 7. PROJECTS TABLE (26 Earning categories)
-CREATE TABLE IF NOT EXISTS public.projects (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title TEXT NOT NULL,
-    title_bn TEXT NOT NULL,
-    category TEXT NOT NULL,
-    icon TEXT NOT NULL,
-    icon_color TEXT NOT NULL DEFAULT '#2563eb',
-    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
-    requires_verification BOOLEAN NOT NULL DEFAULT FALSE,
-    action_type TEXT NOT NULL DEFAULT 'modal' CHECK (action_type IN ('modal', 'route', 'external')),
-    modal_id TEXT,
-    badge TEXT,
-    description TEXT,
-    order_index INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 8. TASKS TABLE (Micro-Jobs)
-CREATE TABLE IF NOT EXISTS public.tasks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+-- 7. TASKS TABLE (Micro-Jobs)
+CREATE TABLE public.tasks (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
     title TEXT NOT NULL,
     category TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -117,11 +117,11 @@ CREATE TABLE IF NOT EXISTS public.tasks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 9. TASK SUBMISSIONS TABLE
-CREATE TABLE IF NOT EXISTS public.task_submissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+-- 8. TASK SUBMISSIONS TABLE
+CREATE TABLE public.task_submissions (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    task_id TEXT NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     task_title TEXT NOT NULL,
     reward_amount NUMERIC(10, 2) NOT NULL,
     proof_text TEXT NOT NULL,
@@ -133,19 +133,42 @@ CREATE TABLE IF NOT EXISTS public.task_submissions (
     CONSTRAINT one_submission_per_user_task UNIQUE (task_id, user_id)
 );
 
--- 10. REFERRAL CODES & REFERRALS TABLE
-CREATE TABLE IF NOT EXISTS public.referrals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    referrer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    referee_id UUID UNIQUE NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    commission_earned NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+-- 9. GMAIL MARKETING / SELL SUBMISSIONS TABLE
+CREATE TABLE public.gmail_submissions (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    gmail_address TEXT NOT NULL,
+    gmail_password TEXT NOT NULL,
+    recovery_email TEXT,
+    price_rate NUMERIC(10, 2) NOT NULL DEFAULT 14.00,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    rejection_reason TEXT,
+    submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    reviewed_at TIMESTAMPTZ
+);
+
+-- 10. PROJECTS TABLE
+CREATE TABLE public.projects (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    title_bn TEXT NOT NULL,
+    category TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    icon_color TEXT NOT NULL DEFAULT '#2563eb',
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    requires_verification BOOLEAN NOT NULL DEFAULT FALSE,
+    action_type TEXT NOT NULL DEFAULT 'modal' CHECK (action_type IN ('modal', 'route', 'external')),
+    modal_id TEXT,
+    badge TEXT,
+    description TEXT,
+    is_coming_soon BOOLEAN DEFAULT FALSE,
+    order_index INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 11. BANNERS TABLE
-CREATE TABLE IF NOT EXISTS public.banners (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.banners (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
     title TEXT NOT NULL,
     image_url TEXT NOT NULL,
     link TEXT,
@@ -156,8 +179,8 @@ CREATE TABLE IF NOT EXISTS public.banners (
 );
 
 -- 12. NOTICES TABLE
-CREATE TABLE IF NOT EXISTS public.notices (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.notices (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
     title TEXT NOT NULL,
     message TEXT NOT NULL,
     telegram_url TEXT,
@@ -169,8 +192,8 @@ CREATE TABLE IF NOT EXISTS public.notices (
 );
 
 -- 13. SOCIAL LINKS TABLE
-CREATE TABLE IF NOT EXISTS public.social_links (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.social_links (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
     platform TEXT NOT NULL,
     name TEXT NOT NULL,
     name_bn TEXT NOT NULL,
@@ -181,18 +204,18 @@ CREATE TABLE IF NOT EXISTS public.social_links (
     order_index INT NOT NULL DEFAULT 0
 );
 
--- 14. BONUS CLAIMS TABLE (Daily, Welcome, Spin, Targets)
-CREATE TABLE IF NOT EXISTS public.bonus_claims (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+-- 14. BONUS CLAIMS TABLE
+CREATE TABLE public.bonus_claims (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     bonus_type TEXT NOT NULL CHECK (bonus_type IN ('daily', 'welcome', 'target', 'spin', 'weekly', 'monthly')),
-    amount NUMERIC(10, 2) NOT NULL,
+    amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
     claimed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 15. GIFT CODES TABLE
-CREATE TABLE IF NOT EXISTS public.gift_codes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.gift_codes (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
     code TEXT UNIQUE NOT NULL,
     reward_amount NUMERIC(10, 2) NOT NULL CHECK (reward_amount > 0),
     max_uses INT NOT NULL DEFAULT 100,
@@ -202,64 +225,8 @@ CREATE TABLE IF NOT EXISTS public.gift_codes (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 16. GIFT CODE REDEMPTIONS
-CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    gift_code_id UUID NOT NULL REFERENCES public.gift_codes(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT one_redemption_per_user UNIQUE (gift_code_id, user_id)
-);
-
--- 17. VERIFICATION REQUESTS TABLE (KYC)
-CREATE TABLE IF NOT EXISTS public.verification_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    document_type TEXT NOT NULL CHECK (document_type IN ('nid', 'birth_certificate', 'passport', 'student_id')),
-    document_number TEXT NOT NULL,
-    document_front_url TEXT NOT NULL,
-    document_back_url TEXT,
-    selfie_url TEXT,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    rejection_reason TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    processed_at TIMESTAMPTZ
-);
-
--- 18. SUPPORT TICKETS
-CREATE TABLE IF NOT EXISTS public.support_tickets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    subject TEXT NOT NULL,
-    message TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'replied', 'closed')),
-    admin_reply TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 19. REVIEWS TABLE
-CREATE TABLE IF NOT EXISTS public.reviews (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT NOT NULL,
-    is_approved BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 20. NOTIFICATIONS TABLE
-CREATE TABLE IF NOT EXISTS public.notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- 21. SITE SETTINGS TABLE (Single row)
-CREATE TABLE IF NOT EXISTS public.site_settings (
+-- 16. SITE SETTINGS TABLE (Single row)
+CREATE TABLE public.site_settings (
     id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
     site_name TEXT NOT NULL DEFAULT 'EASY EARNING BD',
     tagline TEXT NOT NULL DEFAULT 'বাংলাদেশের বিশ্বস্ত অনলাইন আর্নিং প্ল্যাটফর্ম',
@@ -287,13 +254,14 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     gmail_today_password TEXT NOT NULL DEFAULT '@easybd2026',
     gmail_tutorial_url TEXT NOT NULL DEFAULT 'https://youtu.be/SVnx1ErWc0s?si=_TNFeyqdNl_J_TQV',
     gmail_report_time TEXT NOT NULL DEFAULT '২-৩ দিন',
+    verification_fee NUMERIC(10, 2) NOT NULL DEFAULT 100.00,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 22. AUDIT LOGS TABLE
-CREATE TABLE IF NOT EXISTS public.audit_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    admin_id UUID NOT NULL REFERENCES public.profiles(id),
+-- 17. AUDIT LOGS TABLE
+CREATE TABLE public.audit_logs (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    admin_id TEXT NOT NULL REFERENCES public.profiles(id),
     admin_name TEXT NOT NULL,
     action TEXT NOT NULL,
     target_type TEXT NOT NULL,
@@ -301,295 +269,6 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     details TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
--- 23. GMAIL MARKETING / SELL SUBMISSIONS TABLE
-CREATE TABLE IF NOT EXISTS public.gmail_submissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    gmail_address TEXT NOT NULL,
-    gmail_password TEXT NOT NULL,
-    recovery_email TEXT,
-    price_rate NUMERIC(10, 2) NOT NULL DEFAULT 14.00,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    rejection_reason TEXT,
-    submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    reviewed_at TIMESTAMPTZ
-);
-
--- ==============================================================================
--- INDEXES FOR FAST PERFORMANCE
--- ==============================================================================
-CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
-CREATE INDEX IF NOT EXISTS idx_profiles_referral_code ON public.profiles(referral_code);
-CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON public.wallets(user_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.wallet_transactions(user_id);
-CREATE INDEX IF NOT EXISTS idx_withdrawals_user_id ON public.withdrawal_requests(user_id);
-CREATE INDEX IF NOT EXISTS idx_task_submissions_user_id ON public.task_submissions(user_id);
-CREATE INDEX IF NOT EXISTS idx_task_submissions_task_id ON public.task_submissions(task_id);
-CREATE INDEX IF NOT EXISTS idx_bonus_claims_user_id ON public.bonus_claims(user_id);
-
--- ==============================================================================
--- DATABASE TRIGGER: AUTO-CREATE PROFILE & WALLET ON USER SIGNUP
--- ==============================================================================
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-DECLARE
-    new_referral_code TEXT;
-    referrer_record RECORD;
-BEGIN
-    -- Generate unique 6-digit alphanumeric referral code
-    new_referral_code := UPPER(SUBSTRING(MD5(RANDOM()::TEXT) FROM 1 FOR 6));
-    
-    -- Insert profile
-    INSERT INTO public.profiles (
-        id, email, full_name, mobile, role, referral_code, referred_by, is_verified, created_at
-    ) VALUES (
-        NEW.id,
-        NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', 'User ' || new_referral_code),
-        COALESCE(NEW.raw_user_meta_data->>'mobile', '01700000000'),
-        'user',
-        new_referral_code,
-        NEW.raw_user_meta_data->>'referred_by',
-        'unverified',
-        NOW()
-    );
-
-    -- Insert wallet
-    INSERT INTO public.wallets (
-        user_id, total_balance, available_balance, pending_balance, total_earnings, total_withdrawals
-    ) VALUES (
-        NEW.id, 0.00, 0.00, 0.00, 0.00, 0.00
-    );
-
-    -- Record referral relationship if valid referral code was passed
-    IF NEW.raw_user_meta_data->>'referred_by' IS NOT NULL THEN
-        SELECT id INTO referrer_record FROM public.profiles WHERE referral_code = NEW.raw_user_meta_data->>'referred_by';
-        IF FOUND THEN
-            INSERT INTO public.referrals (referrer_id, referee_id, commission_earned)
-            VALUES (referrer_record.id, NEW.id, 0.00);
-        END IF;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger definition for auth.users
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- ==============================================================================
--- SECURE STORED PROCEDURES (ATOMIC TRANSACTIONS & FINANCIAL VALIDATIONS)
--- ==============================================================================
-
--- 1. Create Withdrawal Request
-CREATE OR REPLACE FUNCTION public.request_withdrawal(
-    p_user_id UUID,
-    p_method TEXT,
-    p_account_number TEXT,
-    p_amount NUMERIC
-) RETURNS JSONB AS $$
-DECLARE
-    v_available NUMERIC;
-    v_min NUMERIC;
-    v_max NUMERIC;
-    v_fee_pct NUMERIC;
-    v_fee NUMERIC;
-    v_final NUMERIC;
-    v_req_id UUID;
-BEGIN
-    SELECT min_withdrawal, max_withdrawal, withdrawal_fee_pct 
-    INTO v_min, v_max, v_fee_pct 
-    FROM public.site_settings WHERE id = 1;
-
-    IF p_amount < v_min THEN
-        RAISE EXCEPTION 'মিনিমাম উত্তোলনের পরিমাণ % টাকা।', v_min;
-    END IF;
-    IF p_amount > v_max THEN
-        RAISE EXCEPTION 'ম্যাক্সিমাম উত্তোলনের পরিমাণ % টাকা।', v_max;
-    END IF;
-
-    SELECT available_balance INTO v_available FROM public.wallets WHERE user_id = p_user_id FOR UPDATE;
-    IF v_available < p_amount THEN
-        RAISE EXCEPTION 'পর্যাপ্ত ব্যালেন্স নেই। আপনার বর্তমান ব্যালেন্স % টাকা।', v_available;
-    END IF;
-
-    v_fee := ROUND((p_amount * v_fee_pct / 100), 2);
-    v_final := p_amount - v_fee;
-
-    -- Deduct from available balance, add to pending balance
-    UPDATE public.wallets
-    SET available_balance = available_balance - p_amount,
-        pending_balance = pending_balance + p_amount,
-        updated_at = NOW()
-    WHERE user_id = p_user_id;
-
-    -- Insert withdrawal record
-    INSERT INTO public.withdrawal_requests (
-        user_id, method, account_number, amount, fee, final_amount, status
-    ) VALUES (
-        p_user_id, p_method, p_account_number, p_amount, v_fee, v_final, 'pending'
-    ) RETURNING id INTO v_req_id;
-
-    -- Record transaction
-    INSERT INTO public.wallet_transactions (
-        user_id, amount, type, description, reference_id, status
-    ) VALUES (
-        p_user_id, -p_amount, 'withdrawal', 'উত্তোলন অনুরোধ (' || UPPER(p_method) || ' - ' || p_account_number || ')', v_req_id::TEXT, 'pending'
-    );
-
-    RETURN jsonb_build_object('success', true, 'withdrawal_id', v_req_id, 'amount', p_amount);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 2. Process Withdrawal Approval (Admin Only)
-CREATE OR REPLACE FUNCTION public.approve_withdrawal(
-    p_admin_id UUID,
-    p_withdrawal_id UUID,
-    p_transaction_id TEXT
-) RETURNS JSONB AS $$
-DECLARE
-    v_user_id UUID;
-    v_amount NUMERIC;
-BEGIN
-    -- Check admin
-    IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_admin_id AND role = 'admin') THEN
-        RAISE EXCEPTION 'শুধুমাত্র এডমিন এই কাজটি করতে পারেন।';
-    END IF;
-
-    SELECT user_id, amount INTO v_user_id, v_amount
-    FROM public.withdrawal_requests
-    WHERE id = p_withdrawal_id AND status = 'pending'
-    FOR UPDATE;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'উত্তোলন অনুরোধ পাওয়া যায়নি বা আগেই প্রক্রিয়া করা হয়েছে।';
-    END IF;
-
-    -- Update withdrawal request
-    UPDATE public.withdrawal_requests
-    SET status = 'approved',
-        admin_transaction_id = p_transaction_id,
-        processed_at = NOW()
-    WHERE id = p_withdrawal_id;
-
-    -- Update user wallet: pending balance is removed and recorded as total_withdrawals
-    UPDATE public.wallets
-    SET pending_balance = pending_balance - v_amount,
-        total_balance = total_balance - v_amount,
-        total_withdrawals = total_withdrawals + v_amount,
-        updated_at = NOW()
-    WHERE user_id = v_user_id;
-
-    -- Update transaction status
-    UPDATE public.wallet_transactions
-    SET status = 'completed'
-    WHERE reference_id = p_withdrawal_id::TEXT;
-
-    RETURN jsonb_build_object('success', true);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 3. Process Withdrawal Rejection (Admin Only - Safely Refund User)
-CREATE OR REPLACE FUNCTION public.reject_withdrawal(
-    p_admin_id UUID,
-    p_withdrawal_id UUID,
-    p_reason TEXT
-) RETURNS JSONB AS $$
-DECLARE
-    v_user_id UUID;
-    v_amount NUMERIC;
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_admin_id AND role = 'admin') THEN
-        RAISE EXCEPTION 'শুধুমাত্র এডমিন এই কাজটি করতে পারেন।';
-    END IF;
-
-    SELECT user_id, amount INTO v_user_id, v_amount
-    FROM public.withdrawal_requests
-    WHERE id = p_withdrawal_id AND status = 'pending'
-    FOR UPDATE;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'উত্তোলন অনুরোধ পাওয়া যায়নি।';
-    END IF;
-
-    -- Update request
-    UPDATE public.withdrawal_requests
-    SET status = 'rejected',
-        rejection_reason = p_reason,
-        processed_at = NOW()
-    WHERE id = p_withdrawal_id;
-
-    -- Refund balance: move back from pending to available
-    UPDATE public.wallets
-    SET pending_balance = pending_balance - v_amount,
-        available_balance = available_balance + v_amount,
-        updated_at = NOW()
-    WHERE user_id = v_user_id;
-
-    -- Update transaction
-    UPDATE public.wallet_transactions
-    SET status = 'cancelled'
-    WHERE reference_id = p_withdrawal_id::TEXT;
-
-    RETURN jsonb_build_object('success', true);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 4. Credit Task Reward on Approval
-CREATE OR REPLACE FUNCTION public.approve_task_submission(
-    p_admin_id UUID,
-    p_submission_id UUID,
-    p_feedback TEXT DEFAULT 'কাজটি সঠিকভাবে সম্পন্ন হয়েছে।'
-) RETURNS JSONB AS $$
-DECLARE
-    v_user_id UUID;
-    v_task_id UUID;
-    v_reward NUMERIC;
-    v_task_title TEXT;
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_admin_id AND role = 'admin') THEN
-        RAISE EXCEPTION 'শুধুমাত্র এডমিন এই কাজটি করতে পারেন।';
-    END IF;
-
-    SELECT user_id, task_id, reward_amount, task_title
-    INTO v_user_id, v_task_id, v_reward, v_task_title
-    FROM public.task_submissions
-    WHERE id = p_submission_id AND status = 'pending'
-    FOR UPDATE;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'সাবমিশন পাওয়া যায়নি বা আগেই সম্পন্ন হয়েছে।';
-    END IF;
-
-    -- Update submission
-    UPDATE public.task_submissions
-    SET status = 'approved',
-        admin_feedback = p_feedback,
-        processed_at = NOW()
-    WHERE id = p_submission_id;
-
-    -- Credit user wallet
-    UPDATE public.wallets
-    SET available_balance = available_balance + v_reward,
-        total_balance = total_balance + v_reward,
-        total_earnings = total_earnings + v_reward,
-        updated_at = NOW()
-    WHERE user_id = v_user_id;
-
-    -- Insert ledger record
-    INSERT INTO public.wallet_transactions (
-        user_id, amount, type, description, reference_id, status
-    ) VALUES (
-        v_user_id, v_reward, 'task_reward', 'টাস্ক সম্পন্ন পুরস্কার: ' || v_task_title, p_submission_id::TEXT, 'completed'
-    );
-
-    RETURN jsonb_build_object('success', true, 'reward', v_reward);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ==============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -600,56 +279,107 @@ ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gmail_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bonus_claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gift_codes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.verification_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Profiles: Users can read their own, Admin can read/manage all
-CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Users can update permitted profile fields" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+-- Allow public read of essential settings, tasks, banners & projects
+CREATE POLICY "Public read profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Public insert profiles" ON public.profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public update profiles" ON public.profiles FOR UPDATE USING (true);
 
--- Wallets: Users can only view their own wallet
-CREATE POLICY "Users can view own wallet" ON public.wallets FOR SELECT USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Public read wallets" ON public.wallets FOR SELECT USING (true);
+CREATE POLICY "Public manage wallets" ON public.wallets FOR ALL USING (true);
 
--- Transactions: Users can view own transactions
-CREATE POLICY "Users can view own transactions" ON public.wallet_transactions FOR SELECT USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Public read transactions" ON public.wallet_transactions FOR SELECT USING (true);
+CREATE POLICY "Public insert transactions" ON public.wallet_transactions FOR INSERT WITH CHECK (true);
 
--- Withdrawals: Users can view and insert own withdrawals
-CREATE POLICY "Users can view own withdrawals" ON public.withdrawal_requests FOR SELECT USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Users can request withdrawal" ON public.withdrawal_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Tasks & Projects & Banners & Notices: Public read
+CREATE POLICY "Public manage withdrawals" ON public.withdrawal_requests FOR ALL USING (true);
 CREATE POLICY "Public read tasks" ON public.tasks FOR SELECT USING (true);
-CREATE POLICY "Public read projects" ON public.projects FOR SELECT USING (true);
+CREATE POLICY "Public manage tasks" ON public.tasks FOR ALL USING (true);
+
+CREATE POLICY "Public manage submissions" ON public.task_submissions FOR ALL USING (true);
+CREATE POLICY "Public manage gmail submissions" ON public.gmail_submissions FOR ALL USING (true);
+
 CREATE POLICY "Public read banners" ON public.banners FOR SELECT USING (true);
 CREATE POLICY "Public read notices" ON public.notices FOR SELECT USING (true);
 CREATE POLICY "Public read social links" ON public.social_links FOR SELECT USING (true);
+CREATE POLICY "Public read projects" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Public read settings" ON public.site_settings FOR SELECT USING (true);
+CREATE POLICY "Public manage settings" ON public.site_settings FOR ALL USING (true);
+CREATE POLICY "Public manage bonus claims" ON public.bonus_claims FOR ALL USING (true);
+CREATE POLICY "Public manage gift codes" ON public.gift_codes FOR ALL USING (true);
+CREATE POLICY "Public manage audit logs" ON public.audit_logs FOR ALL USING (true);
 
--- Task Submissions: Users view/insert own, admin can update
-CREATE POLICY "Users can view own submissions" ON public.task_submissions FOR SELECT USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Users can insert submissions" ON public.task_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- ==============================================================================
+-- INITIAL SEED DATA
+-- ==============================================================================
 
--- Bonus Claims: Users view and insert own
-CREATE POLICY "Users can view own bonus claims" ON public.bonus_claims FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can claim bonus" ON public.bonus_claims FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- 1. Default Admin & Demo User Profiles
+INSERT INTO public.profiles (id, email, full_name, mobile, role, referral_code, is_verified) VALUES
+('admin-songworld', 'songworld061@gmail.com', 'DEVELOPER AHAD (Admin)', '01700000000', 'admin', 'AHADADMIN', 'verified'),
+('admin-demo-1', 'admin@easyearningbd.com', 'এডমিন আহাদ', '01812345678', 'admin', 'AHADADMIN2', 'verified'),
+('user-demo-1', 'user@easyearningbd.com', 'মোহাম্মদ রাশেদ', '01711223344', 'user', 'EASYBD', 'verified')
+ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, is_verified = EXCLUDED.is_verified;
 
--- Verification: Users view/insert own
-CREATE POLICY "Users can view own verification" ON public.verification_requests FOR SELECT USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Users can submit verification" ON public.verification_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- 2. Initial Wallets
+INSERT INTO public.wallets (id, user_id, total_balance, available_balance, pending_balance, total_earnings, total_withdrawals) VALUES
+('w-admin-songworld', 'admin-songworld', 50000.00, 50000.00, 0.00, 50000.00, 0.00),
+('w-admin', 'admin-demo-1', 50000.00, 50000.00, 0.00, 50000.00, 0.00),
+('w-user-1', 'user-demo-1', 485.50, 485.50, 0.00, 1250.00, 764.50)
+ON CONFLICT (user_id) DO NOTHING;
 
--- Gmail Submissions: Users view/insert own, admin can update/manage
-ALTER TABLE public.gmail_submissions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own gmail submissions" ON public.gmail_submissions FOR SELECT USING (auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Users can insert gmail submissions" ON public.gmail_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Admins manage all gmail submissions" ON public.gmail_submissions FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+-- 3. Site Settings
+INSERT INTO public.site_settings (
+    id, site_name, tagline, developer_credit, min_withdrawal, max_withdrawal,
+    withdrawal_fee_pct, referral_bonus, daily_bonus_base, welcome_bonus_amount,
+    support_whatsapp, support_telegram, support_email, support_phone,
+    notice_headline, payment_bkash, payment_nagad, payment_rocket,
+    gmail_sell_price, gmail_daily_limit, gmail_today_password, gmail_tutorial_url, gmail_report_time
+) VALUES (
+    1, 'EASY EARNING BD', 'বাংলাদেশের ১ নম্বর বিশ্বস্ত অনলাইন আয় প্ল্যাটফর্ম',
+    'DEVELOPER AHAD', 50.00, 25000.00, 2.00, 10.00, 5.00, 25.00,
+    '+8801712345678', 'https://t.me/easyearningbd', 'support@easyearningbd.com', '+8801812345678',
+    '🎉 শুভ স্বাগতম EASY EARNING BD তে! একাউন্ট ভেরিফাই করলেই পেয়ে যাবেন স্পেশাল ওয়েলকাম বোনাস।',
+    '01712345678', '01812345678', '01912345678',
+    14.00, 1000, '@easybd2026', 'https://youtu.be/SVnx1ErWc0s?si=_TNFeyqdNl_J_TQV', '২-৩ দিন'
+) ON CONFLICT (id) DO UPDATE SET
+    site_name = EXCLUDED.site_name,
+    gmail_sell_price = EXCLUDED.gmail_sell_price,
+    gmail_today_password = EXCLUDED.gmail_today_password;
 
+-- 4. Banners
+INSERT INTO public.banners (id, title, image_url, badge, status, order_index) VALUES
+('b1', 'দৈনিক কাজ করে ২০০-৫০০ টাকা আয় করুন', 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&q=80', 'নতুন অফার', 'active', 1),
+('b2', 'বন্ধুদের রেফার করে আয় করুন আকর্ষণীয় কমিশন', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&q=80', 'রেফারেল অফার', 'active', 2),
+('b3', 'বিকাশ ও নগদে সরাসরি ইনস্ট্যান্ট উইথড্রয়াল', 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80', 'ইনস্ট্যান্ট ক্যাশআউট', 'active', 3)
+ON CONFLICT (id) DO NOTHING;
+
+-- 5. Social Links
+INSERT INTO public.social_links (id, platform, name, name_bn, url, icon, color, is_active, order_index) VALUES
+('s1', 'facebook_page', 'Facebook Page', 'ফেসবুক পেজ', 'https://facebook.com', 'fa-brands fa-facebook', '#1877F2', true, 1),
+('s2', 'facebook_group', 'Facebook Group', 'ফেসবুক গ্রুপ', 'https://facebook.com/groups', 'fa-solid fa-users', '#0866FF', true, 2),
+('s3', 'telegram', 'Telegram Channel', 'টেলিগ্রাম চ্যানেল', 'https://t.me', 'fa-brands fa-telegram', '#229ED9', true, 3),
+('s4', 'whatsapp', 'WhatsApp Group', 'হোয়াটসঅ্যাপ হেল্পলাইন', 'https://whatsapp.com', 'fa-brands fa-whatsapp', '#25D366', true, 4),
+('s5', 'youtube', 'YouTube Channel', 'ইউটিউব চ্যানেল', 'https://youtube.com', 'fa-brands fa-youtube', '#FF0000', true, 5),
+('s6', 'instagram', 'Instagram', 'ইনস্টাগ্রাম', 'https://instagram.com', 'fa-brands fa-instagram', '#E4405F', true, 6),
+('s7', 'support', 'Live Support', '২৪/৭ লাইভ সাপোর্ট', 'https://tawk.to', 'fa-solid fa-headset', '#008744', true, 7)
+ON CONFLICT (id) DO NOTHING;
+
+-- 6. Initial Notice
+INSERT INTO public.notices (id, title, message, telegram_url, whatsapp_url, tutorial_url, is_active, display_frequency) VALUES
+('n1', 'গুরুত্বপূর্ণ নোটিশ ও দিকনির্দেশনা', 'সকল ইউজারদের অবগতির জন্য জানানো যাচ্ছে যে, সঠিক নিয়মে কাজ জমা দিলে মাত্র ১০-৩০ মিনিটের মধ্যে টাকা ওয়ালেটে যোগ হবে। কোনো প্রকার ফেক স্ক্রিনশট বা মিথ্যা তথ্য দিলে একাউন্ট ব্যান করা হবে। উইথড্রয়াল সর্বনিম্ন ৫০ টাকা থেকে শুরু।', 'https://t.me/easyearningbd', 'https://wa.me/8801712345678', 'https://youtube.com', true, 'once_per_session')
+ON CONFLICT (id) DO NOTHING;
+
+-- 7. Gift Codes
+INSERT INTO public.gift_codes (id, code, reward_amount, max_uses, current_uses, is_active) VALUES
+('gc1', 'EASY2026', 20.00, 500, 12, true),
+('gc2', 'WELCOME10', 10.00, 1000, 45, true),
+('gc3', 'AHADSPECIAL', 50.00, 200, 8, true)
+ON CONFLICT (id) DO NOTHING;

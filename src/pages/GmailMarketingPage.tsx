@@ -187,62 +187,88 @@ export const GmailMarketingPage: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                জিমেইল লিখুন <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={gmailAddress}
-                onChange={(e) => setGmailAddress(e.target.value)}
-                placeholder="যেমন: myname1234@gmail.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                required
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  পাসওয়ার্ড লিখুন <span className="text-red-500">*</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAutoFillPassword}
-                  className="text-[10px] text-blue-700 font-bold hover:underline"
-                >
-                  আজকের পাসওয়ার্ড বসান
-                </button>
+          {user?.is_verified !== 'verified' ? (
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-center space-y-3">
+              <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-xl mx-auto shadow-2xs">
+                <i className="fa-solid fa-lock"></i>
               </div>
-              <input
-                type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="যেমন: @easybd2026"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                required
-              />
+              <div>
+                <span className="text-[10px] font-extrabold bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full uppercase">
+                  জিমেইল সেল লকড
+                </span>
+                <h4 className="text-sm font-black text-slate-900 mt-1.5">
+                  ১০০ টাকা দিয়ে একাউন্ট ভেরিফাই করুন
+                </h4>
+                <p className="text-xs text-slate-600 mt-1">
+                  জিমেইল সেল করে প্রতি মেইলে ৳{price.toFixed(2)} আয় করতে প্রথমে ১০০ টাকা ফি দিয়ে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করতে হবে।
+                </p>
+              </div>
+              <a
+                href="/verification.html"
+                className="w-full py-2.5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                <i className="fa-solid fa-unlock"></i>
+                <span>১০০ টাকা দিয়ে ভেরিফাই করুন 👉</span>
+              </a>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  জিমেইল লিখুন <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={gmailAddress}
+                  onChange={(e) => setGmailAddress(e.target.value)}
+                  placeholder="যেমন: myname1234@gmail.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  required
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-950 hover:to-indigo-950 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <i className="fa-solid fa-spinner fa-spin"></i>
-                  <span>যাচাই ও সাবমিট হচ্ছে...</span>
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-check-square"></i>
-                  <span>সাবমিট করুন (৳{price.toFixed(2)} ইনকাম)</span>
-                </>
-              )}
-            </button>
-          </form>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    পাসওয়ার্ড লিখুন <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAutoFillPassword}
+                    className="text-[10px] text-blue-700 font-bold hover:underline"
+                  >
+                    আজকের পাসওয়ার্ড বসান
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="যেমন: @easybd2026"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 placeholder:text-slate-400 font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-950 hover:to-indigo-950 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>যাচাই ও সাবমিট হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-check-square"></i>
+                    <span>সাবমিট করুন (৳{price.toFixed(2)} ইনকাম)</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </AuthGuard>

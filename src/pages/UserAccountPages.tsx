@@ -159,89 +159,296 @@ export const EditProfilePage: React.FC = () => {
 
 export const VerificationPage: React.FC = () => {
   const user = store.getCurrentUser();
-  const [docType, setDocType] = useState('nid');
-  const [docNumber, setDocNumber] = useState('');
-  const [docImage, setDocImage] = useState('');
+  const settings = store.getSettings();
+  const [method, setMethod] = useState<'bkash' | 'nagad' | 'rocket'>('bkash');
+  const [senderNumber, setSenderNumber] = useState('');
+  const [trxId, setTrxId] = useState('');
+  const [proofImage, setProofImage] = useState('');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; success: boolean } | null>(null);
+
+  const feeAmount = settings.verification_fee || 100;
+  const paymentNumbers = settings.payment_numbers;
+
+  const handleCopy = (num: string, key: string) => {
+    const cleanNum = num.split(' ')[0];
+    navigator.clipboard.writeText(cleanNum).then(() => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    });
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setDocImage(reader.result as string);
+    reader.onload = () => setProofImage(reader.result as string);
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!senderNumber.trim() || !trxId.trim()) {
+      setFeedback({ text: 'প্রেরক নাম্বার এবং TrxID পূরণ করা আবশ্যক।', success: false });
+      return;
+    }
     setIsSubmitting(true);
-    setTimeout(() => {
-      const res = store.submitVerification(
+    setFeedback(null);
+    setTimeout(async () => {
+      const res = await store.submitVerification(
         user.id,
-        docType,
-        docNumber,
-        docImage || 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&w=400&q=80'
+        method,
+        senderNumber.trim(),
+        trxId.trim().toUpperCase(),
+        proofImage,
+        feeAmount
       );
       setIsSubmitting(false);
       setFeedback({ text: res.message, success: res.success });
-    }, 600);
+    }, 100);
   };
 
   return (
     <AuthGuard>
-      <div className="space-y-4">
-        <Breadcrumb items={[{ label: 'প্রোফাইল', href: '/profile.html' }, { label: 'একাউন্ট ভেরিফিকেশন (KYC)' }]} />
+      <div className="space-y-4 max-w-xl mx-auto">
+        <Breadcrumb items={[{ label: 'প্রোফাইল', href: '/profile.html' }, { label: '১০০ টাকা একাউন্ট ভেরিফিকেশন' }]} />
 
-        <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">আইডি ভেরিফিকেশন (KYC)</h2>
-            <p className="text-xs text-slate-500">আপনার NID বা জন্ম নিবন্ধন সনদ জমা দিয়ে নিরাপদ লেনদেন নিশ্চিত করুন</p>
+        {/* Top Highlight Banner */}
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white rounded-3xl p-5 shadow-md border border-blue-800">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+              <i className="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/30">
+                বাধ্যতামূলক অ্যাক্টিভেশন
+              </span>
+              <h2 className="text-base sm:text-lg font-black text-white mt-1">
+                ১০০ টাকা দিয়ে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করুন
+              </h2>
+              <p className="text-xs text-blue-200 mt-0.5">
+                ভেরিফিকেশন ছাড়া কোনো প্রকার টাস্ক, মাইক্রো জব বা জিমেইল সেল ওপেন হবে না
+              </p>
+            </div>
           </div>
+        </div>
 
-          {user?.is_verified === 'verified' ? (
-            <div className="p-4 bg-green-50 rounded-2xl border border-green-200 text-center space-y-2">
-              <i className="fa-solid fa-circle-check text-green-600 text-3xl"></i>
-              <h3 className="font-bold text-sm text-green-900">আপনার একাউন্ট সম্পূর্ণ ভেরিফাইড!</h3>
-              <p className="text-xs text-green-700">আপনি সর্বোচ্চ লিমিটে আনলিমিটেড উইথড্র উপভোগ করতে পারবেন।</p>
+        {/* Status: Verified */}
+        {user?.is_verified === 'verified' && (
+          <div className="bg-white rounded-3xl p-6 border border-emerald-200 shadow-sm text-center space-y-4">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+              <i className="fa-solid fa-circle-check"></i>
             </div>
-          ) : user?.is_verified === 'pending' ? (
-            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center space-y-2">
-              <i className="fa-solid fa-hourglass-half text-amber-600 text-3xl animate-pulse"></i>
-              <h3 className="font-bold text-sm text-amber-900">ভেরিফিকেশন পর্যালোচনায় আছে</h3>
-              <p className="text-xs text-amber-700">আমাদের এডমিন আপনার জমাকৃত ডকুমেন্টস যাচাই করছে।</p>
+            <div>
+              <span className="text-[11px] font-extrabold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full uppercase">
+                একাউন্ট সক্রিয় ও ভেরিফাইড
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-2">আপনার একাউন্ট ১০০% ভেরিফাইড!</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto mt-1">
+                অভিনন্দন! আপনার ১০০ টাকা ভেরিফিকেশন সফল হয়েছে। এখন আপনি সকল মাইক্রো টাস্ক, জিমেইল মার্কেটিং ও আনলিমিটেড উইথড্র উপভোগ করতে পারবেন।
+              </p>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+              <a
+                href="/micro-jobs.html"
+                className="px-5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-transform active:scale-95"
+              >
+                <i className="fa-solid fa-briefcase mr-1.5"></i> কাজ শুরু করুন (Micro Jobs)
+              </a>
+              <a
+                href="/dashboard.html"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all"
+              >
+                ড্যাশবোর্ডে যান
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Status: Pending */}
+        {user?.is_verified === 'pending' && (
+          <div className="bg-white rounded-3xl p-6 border border-amber-200 shadow-sm space-y-4">
+            <div className="flex items-center gap-3.5 border-b border-amber-100 pb-4">
+              <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center text-2xl shrink-0 animate-pulse">
+                <i className="fa-solid fa-hourglass-half"></i>
+              </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ডকুমেন্ট প্রকার</label>
-                <select
-                  value={docType}
-                  onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"
-                >
-                  <option value="nid">জাতীয় পরিচয়পত্র (NID)</option>
-                  <option value="birth_certificate">জন্ম নিবন্ধন সনদ</option>
-                  <option value="passport">পাসপোর্ট</option>
-                  <option value="student_id">স্টুডেন্ট আইডি</option>
-                </select>
+                <span className="text-[10px] font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase">
+                  পর্যালোচনায় রয়েছে
+                </span>
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">১০০ টাকা ভেরিফিকেশন রিকোয়েস্ট পেন্ডিং</h3>
+                <p className="text-xs text-slate-500">এডমিন আপনার পেমেন্ট TrxID চেক করে দ্রুত এপ্রুভ করবেন।</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="font-bold text-slate-800 mb-1">আপনার জমাকৃত পেমেন্ট বিবরণ:</div>
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500">ভেরিফিকেশন ফি:</span>
+                <span className="font-extrabold text-slate-900">৳{user.verification_fee_amount || 100}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500">পেমেন্ট মেথড:</span>
+                <span className="font-bold text-blue-900 uppercase">{user.verification_payment_method || 'bKash'}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-500">প্রেরক নাম্বার:</span>
+                <span className="font-mono font-bold text-slate-800">{user.verification_sender_number || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Transaction ID (TrxID):</span>
+                <span className="font-mono font-bold text-emerald-700">{user.verification_trx_id || 'N/A'}</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-900 flex items-start gap-2">
+              <i className="fa-solid fa-circle-info text-blue-600 mt-0.5"></i>
+              <span>সাধারণত ১০ থেকে ৩০ মিনিটের মধ্যে অনুমোদন হয়ে যায়। অনুমোদনের সাথে সাথেই সকল কাজ স্বয়ংক্রিয়ভাবে খুলে যাবে।</span>
+            </div>
+          </div>
+        )}
+
+        {/* Status: Unverified or Rejected */}
+        {(user?.is_verified === 'unverified' || user?.is_verified === 'rejected' || !user?.is_verified) && (
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+            {user?.is_verified === 'rejected' && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <i className="fa-solid fa-circle-exclamation text-red-600"></i>
+                  পূর্ববর্তী ভেরিফিকেশন বাতিল হয়েছে
+                </div>
+                <p>{user.verification_notes || 'ভুল TrxID বা পেমেন্ট না পাওয়ায় বাতিল হয়েছে। দয়া করে সঠিক তথ্য দিয়ে পুনরায় জমা দিন।'}</p>
+              </div>
+            )}
+
+            {/* Step 1: Admin Payment Numbers */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">১</span>
+                  নিচের নাম্বারে ১০০ টাকা Send Money করুন
+                </h3>
+                <span className="text-xs font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                  ফি: ৳{feeAmount}
+                </span>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* bKash */}
+                <div className="p-3 rounded-2xl border border-pink-200 bg-pink-50/50 flex flex-col justify-between gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-pink-700">বিকাশ (Personal)</span>
+                    <span className="text-[10px] text-pink-600 bg-pink-100 px-1.5 py-0.5 rounded font-bold">৳১০০</span>
+                  </div>
+                  <span className="font-mono font-bold text-xs text-slate-900">{paymentNumbers.bkash}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(paymentNumbers.bkash, 'bkash')}
+                    className="w-full py-1 text-[11px] font-bold bg-pink-600 hover:bg-pink-700 text-white rounded-lg transition-all"
+                  >
+                    {copiedKey === 'bkash' ? 'কপি হয়েছে ✓' : 'নাম্বার কপি করুন'}
+                  </button>
+                </div>
+
+                {/* Nagad */}
+                <div className="p-3 rounded-2xl border border-orange-200 bg-orange-50/50 flex flex-col justify-between gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-orange-700">নগদ (Personal)</span>
+                    <span className="text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded font-bold">৳১০০</span>
+                  </div>
+                  <span className="font-mono font-bold text-xs text-slate-900">{paymentNumbers.nagad}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(paymentNumbers.nagad, 'nagad')}
+                    className="w-full py-1 text-[11px] font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-all"
+                  >
+                    {copiedKey === 'nagad' ? 'কপি হয়েছে ✓' : 'নাম্বার কপি করুন'}
+                  </button>
+                </div>
+
+                {/* Rocket */}
+                <div className="p-3 rounded-2xl border border-purple-200 bg-purple-50/50 flex flex-col justify-between gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-purple-700">রকেট (Personal)</span>
+                    <span className="text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded font-bold">৳১০০</span>
+                  </div>
+                  <span className="font-mono font-bold text-xs text-slate-900">{paymentNumbers.rocket}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(paymentNumbers.rocket, 'rocket')}
+                    className="w-full py-1 text-[11px] font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all"
+                  >
+                    {copiedKey === 'rocket' ? 'কপি হয়েছে ✓' : 'নাম্বার কপি করুন'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2: Form Submission */}
+            <form onSubmit={handleSubmit} className="space-y-3 pt-2 border-t border-slate-100">
+              <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">২</span>
+                পেমেন্টের তথ্য জমা দিন
+              </h3>
+
+              {/* Payment Method Select */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ডকুমেন্ট নম্বর</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">পেমেন্ট মেথড নির্বাচন করুন</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['bkash', 'nagad', 'rocket'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMethod(m)}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold uppercase transition-all ${
+                        method === m
+                          ? 'border-blue-900 bg-blue-900 text-white shadow-xs'
+                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-white'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sender Number */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  যে নাম্বার থেকে ১০০ টাকা পাঠিয়েছেন (Sender Number)
+                </label>
                 <input
-                  type="text"
-                  placeholder="যেমন: 1998564738..."
-                  value={docNumber}
-                  onChange={(e) => setDocNumber(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                  type="tel"
+                  placeholder="যেমন: 017XXXXXXXX"
+                  value={senderNumber}
+                  onChange={(e) => setSenderNumber(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
                   required
                 />
               </div>
 
+              {/* Transaction ID */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ডকুমেন্টের সামনের ছবি</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Transaction ID (TrxID)
+                </label>
+                <input
+                  type="text"
+                  placeholder="যেমন: BL9X7Q28W1"
+                  value={trxId}
+                  onChange={(e) => setTrxId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs uppercase outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
+                  required
+                />
+              </div>
+
+              {/* Screenshot Proof */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  পেমেন্ট স্ক্রিনশট (ঐচ্ছিক)
+                </label>
                 <input
                   type="file"
                   accept="image/*"
@@ -253,7 +460,7 @@ export const VerificationPage: React.FC = () => {
               {feedback && (
                 <div
                   className={`p-3 rounded-xl text-xs font-bold text-center ${
-                    feedback.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                    feedback.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
                   }`}
                 >
                   {feedback.text}
@@ -263,13 +470,23 @@ export const VerificationPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95"
+                className="w-full py-3 bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 hover:opacity-95 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                {isSubmitting ? <i className="fa-solid fa-spinner fa-spin"></i> : 'ভেরিফিকেশন সাবমিট করুন'}
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>জমা হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-lock-open"></i>
+                    <span>ভেরিফিকেশন রিকোয়েস্ট পাঠান (৳{feeAmount})</span>
+                  </>
+                )}
               </button>
             </form>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </AuthGuard>
   );

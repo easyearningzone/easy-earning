@@ -28,6 +28,11 @@ export interface UserProfile {
   created_at: string;
   is_verified: VerificationStatus;
   is_suspended: boolean;
+  verification_payment_method?: string;
+  verification_sender_number?: string;
+  verification_trx_id?: string;
+  verification_fee_amount?: number;
+  verification_submitted_at?: string;
   verification_doc_type?: string;
   verification_doc_number?: string;
   verification_doc_image?: string;
@@ -214,6 +219,7 @@ export interface SiteSettings {
   gmail_today_password: string;
   gmail_tutorial_url: string;
   gmail_report_time: string;
+  verification_fee: number;
   payment_numbers: {
     bkash: string;
     nagad: string;

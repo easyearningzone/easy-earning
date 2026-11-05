@@ -47,12 +47,14 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
     setIsSubmitting(true);
     setFeedback(null);
 
-    setTimeout(() => {
-      const res = store.submitVerification(
+    setTimeout(async () => {
+      const res = await store.submitVerification(
         user.id,
         docType,
+        user.mobile,
         docNumber,
-        docImage || 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&w=400&q=80'
+        docImage || 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&w=400&q=80',
+        100
       );
       setIsSubmitting(false);
       setFeedback({ text: res.message, success: res.success });
@@ -61,7 +63,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
           onClose();
         }, 1500);
       }
-    }, 600);
+    }, 100);
   };
 
   return (

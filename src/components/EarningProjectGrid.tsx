@@ -17,6 +17,7 @@ export const EarningProjectGrid: React.FC<EarningProjectGridProps> = ({
 }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'bonus' | 'tasks' | 'services'>('all');
   const [comingSoonProject, setComingSoonProject] = useState<ProjectItem | null>(null);
+  const [lockedProject, setLockedProject] = useState<ProjectItem | null>(null);
 
   const filteredProjects = projects.filter((p) => {
     if (p.status !== 'active') return false;
@@ -27,13 +28,20 @@ export const EarningProjectGrid: React.FC<EarningProjectGridProps> = ({
     return true;
   });
 
+  const isProjectLocked = (project: ProjectItem) => {
+    if (user?.is_verified === 'verified') return false;
+    // Referral and Leaderboard can be viewed, but all earning tasks & jobs are strictly locked
+    const isEarningTask = !['referral', 'rankings'].includes(project.category) || project.requires_verification;
+    return isEarningTask;
+  };
+
   const handleProjectClick = (project: ProjectItem) => {
     if (project.is_coming_soon) {
       setComingSoonProject(project);
       return;
     }
-    if (project.requires_verification && user?.is_verified !== 'verified') {
-      onRequireVerification();
+    if (isProjectLocked(project)) {
+      setLockedProject(project);
       return;
     }
     onSelectProject(project);
@@ -126,10 +134,11 @@ export const EarningProjectGrid: React.FC<EarningProjectGridProps> = ({
                   </span>
                 ) : null}
 
-                {/* Requires verification lock indicator */}
-                {!isComingSoon && project.requires_verification && user?.is_verified !== 'verified' && (
-                  <span className="absolute top-1 left-1 text-[9px] text-amber-700 bg-amber-100 px-1 rounded flex items-center gap-0.5">
+                {/* Lock indicator if not verified */}
+                {!isComingSoon && isProjectLocked(project) && (
+                  <span className="absolute top-1 left-1 text-[9px] text-rose-700 bg-rose-100/90 font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-2xs border border-rose-200">
                     <i className="fa-solid fa-lock text-[8px]"></i>
+                    <span className="text-[7.5px]">লকড</span>
                   </span>
                 )}
 
@@ -161,6 +170,55 @@ export const EarningProjectGrid: React.FC<EarningProjectGridProps> = ({
           })}
         </div>
       </div>
+
+      {/* Verification Required Modal */}
+      {lockedProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 border border-slate-200 shadow-xl space-y-4 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
+              <i className="fa-solid fa-lock"></i>
+            </div>
+            <div>
+              <span className="text-[10px] font-extrabold bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full uppercase">
+                ১০০ টাকা ভেরিফিকেশন প্রয়োজন
+              </span>
+              <h3 className="text-base font-black text-slate-900 mt-2">
+                টাস্কটি বর্তমানে লক করা আছে!
+              </h3>
+              <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                <strong>{lockedProject.title_bn}</strong> সহ যেকোনো টাস্ক বা প্রজেক্ট ওপেন করার জন্য প্রথমে ১০০ টাকা ফি প্রদান করে একাউন্ট ভেরিফাই ও অ্যাক্টিভ করতে হবে।
+              </p>
+            </div>
+
+            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-left text-xs text-amber-900 space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <i className="fa-solid fa-shield-halved text-amber-600"></i>
+                ভেরিফিকেশন ফি: ১০০ টাকা
+              </div>
+              <p className="text-[11px] text-amber-800">
+                বিকাশ, নগদ বা রকেটে ১০০ টাকা পাঠিয়ে TrxID সাবমিট করলেই এডমিন ভেরিফাই করে সকল কাজ খুলে দেবেন।
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <a
+                href="/verification.html"
+                className="w-full py-2.5 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <i className="fa-solid fa-unlock"></i>
+                <span>১০০ টাকা দিয়ে ভেরিফাই করুন 👉</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setLockedProject(null)}
+                className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              >
+                পরে করব
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Coming Soon Interactive Modal */}
       <ComingSoonModal
