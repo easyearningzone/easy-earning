@@ -56,7 +56,7 @@ export const RegisterPage: React.FC = () => {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
         <div className="text-center space-y-1">
-          <a href="/dashboard.html" className="inline-block">
+          <a href="/login.html" className="inline-block">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center mx-auto shadow-md">
               <i className="fa-solid fa-hand-holding-dollar text-blue-950 text-xl font-bold"></i>
             </div>
@@ -200,7 +200,7 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4">
         <div className="text-center space-y-1">
-          <a href="/dashboard.html" className="inline-block">
+          <a href="/login.html" className="inline-block">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center mx-auto shadow-md">
               <i className="fa-solid fa-hand-holding-dollar text-blue-950 text-xl font-bold"></i>
             </div>

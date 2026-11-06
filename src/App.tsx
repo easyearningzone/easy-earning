@@ -111,12 +111,36 @@ export default function App() {
 
   const pageId = getPageId();
 
-  // Route: Admin Login
-  if (pageId === 'admin-login') {
-    return <AdminLoginPage />;
+  // 1. Unauthenticated Visitors: Website opens to Login Page first
+  if (!currentUser) {
+    if (pageId === 'register') return <RegisterPage />;
+    if (pageId === 'forgot-password') return <ForgotPasswordPage />;
+    if (pageId === 'admin-login') return <AdminLoginPage />;
+    // When opening the website first (or any page without login), display LoginPage
+    return <LoginPage />;
   }
 
-  // Route: Admin Pages (all /admin/*.html)
+  // 2. Authenticated Admin: Opening website or admin pages opens Admin Dashboard
+  if (currentUser.role === 'admin') {
+    if (
+      pathname === '/' ||
+      pathname === '/index.html' ||
+      pathname === '/login.html' ||
+      pageId === 'admin-login' ||
+      pathname.startsWith('/admin')
+    ) {
+      return (
+        <AdminDashboard
+          onBackToApp={() => {
+            window.location.href = '/dashboard.html';
+          }}
+          currentUser={currentUser}
+        />
+      );
+    }
+  }
+
+  // 3. Admin Protected Routes
   if (pathname.startsWith('/admin')) {
     return (
       <AdminDashboard
@@ -128,10 +152,13 @@ export default function App() {
     );
   }
 
-  // Standalone Auth Pages (No Header/Footer distraction)
+  // 4. Standalone Auth Pages for already logged-in users
   if (pageId === 'register') return <RegisterPage />;
-  if (pageId === 'login') return <LoginPage />;
   if (pageId === 'forgot-password') return <ForgotPasswordPage />;
+  if (pageId === 'login') {
+    window.location.href = currentUser.role === 'admin' ? '/admin/dashboard.html' : '/dashboard.html';
+    return null;
+  }
 
   // Render Inner Page View
   const renderPageContent = () => {

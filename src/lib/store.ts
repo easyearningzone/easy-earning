@@ -270,9 +270,17 @@ export class AppStore {
       localStorage.setItem(KEY_USERS, JSON.stringify(currentUsers));
     }
 
-    // Default current user to demo user if not logged in
-    if (!localStorage.getItem(KEY_CURRENT_USER)) {
-      localStorage.setItem(KEY_CURRENT_USER, JSON.stringify(DEFAULT_USERS[0]));
+    // Do not auto-login demo user. If a demo user session was previously saved, clear it.
+    const savedSession = localStorage.getItem(KEY_CURRENT_USER);
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        if (parsed.id === 'user-demo-1' || parsed.id === 'admin-demo-1' || parsed.email === 'user@easyearningbd.com') {
+          localStorage.removeItem(KEY_CURRENT_USER);
+        }
+      } catch {
+        localStorage.removeItem(KEY_CURRENT_USER);
+      }
     }
 
     // Auto-sync with Supabase in background
