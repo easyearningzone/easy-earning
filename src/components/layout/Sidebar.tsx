@@ -167,9 +167,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <div className="py-2 text-center">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-xl text-white">
-                <i className="fa-solid fa-user"></i>
-              </div>
+              <img
+                src="/assets/aistudio/Easy_Earning_BD_Growth_Emblem_331a2dc7.png"
+                alt="Easy Earning BD Logo"
+                className="w-16 h-16 object-contain drop-shadow-md rounded-2xl mx-auto mb-2"
+              />
               <h3 className="font-bold text-sm">স্বাগতম অতিথি!</h3>
               <p className="text-xs text-blue-200 mb-2">আয় শুরু করতে একাউন্টে লগইন করুন</p>
               <a

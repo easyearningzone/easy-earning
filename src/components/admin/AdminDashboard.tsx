@@ -205,9 +205,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span>ইউজার সাইটে ফিরুন</span>
             </button>
             <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-sm shadow-xs">
-                <i className="fa-solid fa-shield-halved"></i>
-              </span>
+              <img
+                src="/assets/aistudio/Easy_Earning_BD_Growth_Emblem_331a2dc7.png"
+                alt="Easy Earning BD Logo"
+                className="w-9 h-9 object-contain rounded-lg drop-shadow"
+              />
               <div>
                 <h1 className="text-sm sm:text-base font-extrabold tracking-wide text-white">
                   EASY EARNING BD &bull; এডমিন প্যানেল

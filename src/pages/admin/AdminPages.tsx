@@ -22,9 +22,11 @@ export const AdminLoginPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
       <div className="bg-slate-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-800 space-y-4">
         <div className="text-center space-y-1">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center mx-auto text-xl font-bold">
-            <i className="fa-solid fa-shield-halved"></i>
-          </div>
+          <img
+            src="/assets/aistudio/Easy_Earning_BD_Growth_Emblem_331a2dc7.png"
+            alt="Easy Earning BD Logo"
+            className="w-16 h-16 object-contain mx-auto drop-shadow-md rounded-2xl"
+          />
           <h1 className="text-lg font-bold text-white">এডমিন লগইন পোর্টাল</h1>
           <p className="text-xs text-slate-400">EASY EARNING BD &bull; সংরক্ষিত এলাকা</p>
         </div>

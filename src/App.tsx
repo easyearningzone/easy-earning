@@ -259,53 +259,6 @@ export default function App() {
               onOpenAuth={() => (window.location.href = '/login.html')}
             />
 
-            {/* 4 Direct Quick Shortcuts */}
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <a
-                href="/bonus.html"
-                className="p-2.5 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all active:scale-95 flex flex-col items-center"
-              >
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg mb-1 shadow-2xs">
-                  <i className="fa-solid fa-calendar-check"></i>
-                </div>
-                <span className="text-[11px] font-bold text-slate-800 line-clamp-1">দৈনিক বোনাস</span>
-                <span className="text-[9px] text-emerald-600 font-extrabold">৫৳ ফ্রি</span>
-              </a>
-
-              <a
-                href="/bonus.html"
-                className="p-2.5 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all active:scale-95 flex flex-col items-center"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg mb-1 shadow-2xs">
-                  <i className="fa-solid fa-dharmachakra"></i>
-                </div>
-                <span className="text-[11px] font-bold text-slate-800 line-clamp-1">লাকি স্পিন</span>
-                <span className="text-[9px] text-amber-600 font-extrabold">৫০৳ পর্যন্ত</span>
-              </a>
-
-              <a
-                href="/bonus.html"
-                className="p-2.5 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all active:scale-95 flex flex-col items-center"
-              >
-                <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center text-lg mb-1 shadow-2xs">
-                  <i className="fa-solid fa-ticket"></i>
-                </div>
-                <span className="text-[11px] font-bold text-slate-800 line-clamp-1">গিফট কোড</span>
-                <span className="text-[9px] text-pink-600 font-extrabold">কোড রিডিম</span>
-              </a>
-
-              <a
-                href="/referral.html"
-                className="p-2.5 bg-white rounded-2xl border border-slate-200 hover:border-blue-300 shadow-2xs hover:shadow-xs transition-all active:scale-95 flex flex-col items-center"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg mb-1 shadow-2xs">
-                  <i className="fa-solid fa-users-viewfinder"></i>
-                </div>
-                <span className="text-[11px] font-bold text-slate-800 line-clamp-1">রেফার করুন</span>
-                <span className="text-[9px] text-blue-600 font-extrabold">১০৳ + ১০%</span>
-              </a>
-            </div>
-
             {/* Social Grid */}
             <SocialGrid socialLinks={socialLinks} />
 

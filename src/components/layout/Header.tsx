@@ -28,9 +28,11 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <a href="/dashboard.html" className="flex items-center gap-2 cursor-pointer select-none">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center shadow-md">
-              <i className="fa-solid fa-hand-holding-dollar text-blue-950 text-lg font-bold"></i>
-            </div>
+            <img
+              src="/assets/aistudio/Easy_Earning_BD_Growth_Emblem_331a2dc7.png"
+              alt="Easy Earning BD Logo"
+              className="w-10 h-10 object-contain drop-shadow-md rounded-xl hover:scale-105 transition-transform"
+            />
             <div>
               <h1 className="text-base sm:text-lg font-extrabold tracking-wide text-white leading-tight flex items-center gap-1.5">
                 {settings.site_name}

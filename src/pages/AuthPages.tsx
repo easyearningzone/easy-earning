@@ -57,9 +57,11 @@ export const RegisterPage: React.FC = () => {
       <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
         <div className="text-center space-y-1">
           <a href="/login.html" className="inline-block">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center mx-auto shadow-md">
-              <i className="fa-solid fa-hand-holding-dollar text-blue-950 text-xl font-bold"></i>
-            </div>
+            <img
+              src="/assets/aistudio/Easy_Earning_BD_Growth_Emblem_331a2dc7.png"
+              alt="Easy Earning BD Logo"
+              className="w-20 h-20 object-contain mx-auto drop-shadow-lg rounded-2xl hover:scale-105 transition-transform"
+            />
           </a>
           <h1 className="text-lg font-bold text-slate-900">নতুন একাউন্ট রেজিস্টার করুন</h1>
           <p className="text-xs text-slate-500">EASY EARNING BD-তে যোগ দিয়ে আজই আয় শুরু করুন</p>
@@ -201,9 +203,11 @@ export const LoginPage: React.FC = () => {
       <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4">
         <div className="text-center space-y-1">
           <a href="/login.html" className="inline-block">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center mx-auto shadow-md">
-              <i className="fa-solid fa-hand-holding-dollar text-blue-950 text-xl font-bold"></i>
-            </div>
+            <img
+              src="/assets/aistudio/Easy_Earning_BD_Growth_Emblem_331a2dc7.png"
+              alt="Easy Earning BD Logo"
+              className="w-20 h-20 object-contain mx-auto drop-shadow-lg rounded-2xl hover:scale-105 transition-transform"
+            />
           </a>
           <h1 className="text-lg font-bold text-slate-900">একাউন্টে লগইন করুন</h1>
           <p className="text-xs text-slate-500">EASY EARNING BD</p>
